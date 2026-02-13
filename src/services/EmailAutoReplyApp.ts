@@ -25,16 +25,6 @@ export class EmailAutoReplyApp {
     const lock = await this.client.getMailboxLock('[Gmail]/Tous les messages');
     try {
       const mailbox = await this.client.mailboxOpen('[Gmail]/Tous les messages');
-      const start = Math.max(1, mailbox.exists - 4);
-
-      for await (const msg of this.client.fetch(`${start}:*`, { envelope: true })) {
-        // warm-up / list recent
-        const subject = msg.envelope?.subject || '(sans sujet)';
-        const from = (msg.envelope?.from || [])
-          .map(addr => addr.address || addr.name)
-          .filter(Boolean)
-          .join(', ') || '(expéditeur inconnu)';
-      }
 
       this.client.on('exists', async (data) => {
         console.log(`[MAIL] New mail detected. Total: ${data.count}`);
