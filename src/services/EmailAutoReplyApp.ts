@@ -81,7 +81,6 @@ export class EmailAutoReplyApp {
             .find(Boolean);
 
           if (!matchedAccount) {
-            console.log(targetRecipients);
             console.log('[MAIL] No matching account, message ignored.');
             continue;
           }
