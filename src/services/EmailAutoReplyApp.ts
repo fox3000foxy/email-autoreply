@@ -1,20 +1,14 @@
-import { franc } from 'franc';
 import type Groq from 'groq-sdk';
 import type { ImapFlow } from 'imapflow';
 import { decorate, inject, injectable } from 'inversify';
-import { simpleParser } from 'mailparser';
 import type { Transporter } from 'nodemailer';
 import { TYPES } from '../di/types';
 import { AccountsService } from './AccountsService';
 
-const MANUAL_REPLY_TRIGGER = '<manual_reply_required>';
-
-type ParsedMailLike = {
-  text?: string;
-  html?: string;
-  headers?: Map<string, string>;
-  to?: unknown;
-};
+import { extractEmails, parseEmail } from './EmailParser';
+import { detectLanguage } from './LanguageDetector';
+import { sendManualForward, sendReply } from './MailSender';
+import { generateReply } from './ReplyGenerator';
 
 export class EmailAutoReplyApp {
   constructor(
@@ -22,8 +16,7 @@ export class EmailAutoReplyApp {
     private readonly transporter: Transporter,
     private readonly groq: Groq,
     private readonly accounts: AccountsService
-  ) {
-  }
+  ) {}
 
   async run(): Promise<void> {
     await this.client.connect();
@@ -35,12 +28,12 @@ export class EmailAutoReplyApp {
       const start = Math.max(1, mailbox.exists - 4);
 
       for await (const msg of this.client.fetch(`${start}:*`, { envelope: true })) {
+        // warm-up / list recent
         const subject = msg.envelope?.subject || '(sans sujet)';
         const from = (msg.envelope?.from || [])
           .map(addr => addr.address || addr.name)
           .filter(Boolean)
           .join(', ') || '(expéditeur inconnu)';
-        // console.log(`${subject} — ${from}`);
       }
 
       this.client.on('exists', async (data) => {
@@ -51,10 +44,7 @@ export class EmailAutoReplyApp {
             .map(addr => addr.address)
             .filter((addr): addr is string => Boolean(addr));
 
-          const isNoReply = fromAddress.some(addr =>
-            /^(do[-_]?not[-_]?reply|no[-_]?reply)@/i.test(addr)
-          );
-
+          const isNoReply = fromAddress.some(addr => /^(do[-_]?not[-_]?reply|no[-_]?reply)@/i.test(addr));
           if (isNoReply) {
             console.log('[MAIL] No-reply sender ignored.');
             continue;
@@ -65,23 +55,21 @@ export class EmailAutoReplyApp {
             continue;
           }
 
-          const parsed = await simpleParser(msg.source) as ParsedMailLike;
+          const parsed = await parseEmail(msg.source);
 
           const textContent = parsed.text || '';
           const htmlContent = parsed.html || '';
-          const detectedLanguage = franc(`${textContent} ${htmlContent}`, { minLength: 20 });
-          const language = detectedLanguage === 'fra' ? 'fr' : detectedLanguage === 'eng' ? 'en' : 'fr';
-
+          const language = detectLanguage(textContent, htmlContent);
           console.log(`[MAIL] Detected language: ${language}`);
 
           const headerDeliveredTo = parsed.headers?.get('delivered-to') as string | undefined;
           const headerOriginalTo = parsed.headers?.get('x-original-to') as string | undefined;
           const headerForwardedTo = parsed.headers?.get('x-forwarded-to') as string | undefined;
 
-          const intendedRecipients = this.extractEmails(parsed.to);
-          const originalRecipients = this.extractEmails(headerOriginalTo);
-          const forwardedRecipients = this.extractEmails(headerForwardedTo);
-          const deliveredRecipients = this.extractEmails(headerDeliveredTo);
+          const intendedRecipients = extractEmails(parsed.to);
+          const originalRecipients = extractEmails(headerOriginalTo);
+          const forwardedRecipients = extractEmails(headerForwardedTo);
+          const deliveredRecipients = extractEmails(headerDeliveredTo);
 
           const toAddress = (msg.envelope?.to || [])
             .map(addr => addr.address)
@@ -111,15 +99,11 @@ export class EmailAutoReplyApp {
           const systemPrompt = `${matchedAccount.prompt}\n${this.accounts.getBaseSystemPrompt()}`;
 
           const matchedRecipient = targetRecipients.find(addr => {
-            if (matchedAccount.email instanceof RegExp) {
-              return matchedAccount.email.test(addr);
-            }
+            if (matchedAccount.email instanceof RegExp) return matchedAccount.email.test(addr);
             return matchedAccount.email.toLowerCase() === addr;
           }) || (typeof matchedAccount.email === 'string' ? matchedAccount.email : undefined);
 
-          const replyFrom = matchedRecipient
-            ? `${matchedAccount.name} <${matchedRecipient}>`
-            : `${matchedAccount.name}`;
+          const replyFrom = matchedRecipient ? `${matchedAccount.name} <${matchedRecipient}>` : `${matchedAccount.name}`;
 
           const subject = msg.envelope?.subject || '(sans sujet)';
           const fromDisplay = (msg.envelope?.from || [])
@@ -129,16 +113,11 @@ export class EmailAutoReplyApp {
 
           const timestamp = msg.envelope?.date
             ? new Date(msg.envelope.date).toLocaleString('fr-FR', {
-                hour: '2-digit',
-                minute: '2-digit',
-                day: '2-digit',
-                month: '2-digit',
-                year: 'numeric'
+                hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric'
               })
             : 'Date inconnue';
 
           console.log(`[MAIL] Received (${timestamp}): ${subject} — ${fromDisplay}`);
-
           console.log('[MAIL] Sender allowed, processing...');
           console.log(`[MAIL] Destination account: ${matchedAccount.name} <${matchedAccount.email}>`);
 
@@ -159,80 +138,30 @@ export class EmailAutoReplyApp {
 
           console.log(`[MAIL] Extracted content (${content.length} characters).`);
 
-          const completion = await this.groq.chat.completions.create({
-            model: 'llama-3.3-70b-versatile',
-            messages: [
-              { role: 'system', content: `${systemPrompt}\nLanguage: ${language}` },
-              { role: 'user', content: content || '(message vide)' }
-            ],
-            temperature: 0.7,
-            max_tokens: 200
-          });
-
-          const aiReply = completion.choices?.[0]?.message?.content?.trim() || 'salut';
+          const { aiReply, manualTrigger } = await generateReply(this.groq, systemPrompt, content, language);
           console.log(`[MAIL] AI reply generated (${aiReply.length} characters).`);
 
-          if (aiReply.includes(MANUAL_REPLY_TRIGGER)) {
+          if (manualTrigger) {
             console.log('[MAIL] Manual trigger detected, forwarding.');
             const manualReplyer = process.env.MANUAL_REPLYER;
             if (!manualReplyer) {
               console.error('MANUAL_REPLYER missing.');
               continue;
             }
-            await this.transporter.sendMail({
-              from: replyFrom,
-              to: manualReplyer,
-              subject: msg.envelope?.subject ? `FWD: ${msg.envelope.subject}` : 'FWD: (sans sujet)',
-              text: [
-                'Manual reply required.',
-                '',
-                `From: ${fromDisplay}`,
-                `To: ${(msg.envelope?.to || []).map(addr => addr.address || addr.name).filter(Boolean).join(', ')}`,
-                `Subject: ${msg.envelope?.subject || '(sans sujet)'}`,
-                '',
-                '---',
-                unescape(emailContent) || '(message vide)'
-              ].join('\n')
-            });
+            await sendManualForward(this.transporter, replyFrom, manualReplyer,
+              (msg.envelope?.to || []).map(addr => addr.address || addr.name).filter(Boolean).join(', '),
+              msg.envelope?.subject || '(sans sujet)', emailContent);
             console.log('[MAIL] Message forwarded.');
             continue;
           }
 
-          await this.transporter.sendMail({
-            from: replyFrom,
-            to: fromAddress.join(', '),
-            subject: msg.envelope?.subject ? `Re: ${msg.envelope.subject}` : 'Re: (sans sujet)',
-            text: aiReply,
-            inReplyTo: msg.envelope?.messageId,
-            references: msg.envelope?.messageId ? [msg.envelope.messageId] : undefined
-          });
+          await sendReply(this.transporter, replyFrom, fromAddress, msg.envelope?.subject, aiReply, msg.envelope?.messageId);
           console.log('[MAIL] Reply sent.');
         }
       });
     } finally {
       lock.release();
     }
-  }
-
-  private extractEmails(value: unknown): string[] {
-    if (!value) return [];
-    if (Array.isArray(value)) return value.flatMap(v => this.extractEmails(v));
-    if (typeof value === 'string') {
-      return (value.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi) || [])
-        .map(v => v.toLowerCase());
-    }
-    if (typeof value === 'object') {
-      const typedValue = value as { value?: Array<{ address?: string }>; address?: string; text?: string };
-      if (Array.isArray(typedValue.value)) {
-        return typedValue.value
-          .map(v => v.address)
-          .filter((v): v is string => Boolean(v))
-          .map(v => v.toLowerCase());
-      }
-      if (typedValue.address) return [typedValue.address.toLowerCase()];
-      if (typedValue.text) return this.extractEmails(typedValue.text);
-    }
-    return [];
   }
 }
 

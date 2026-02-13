@@ -2,3 +2,4 @@
 data/accounts.json
 node_modules/
 dist/
+data/customers/
