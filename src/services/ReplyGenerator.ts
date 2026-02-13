@@ -6,12 +6,17 @@ export async function generateReply(
   groq: Groq,
   systemPrompt: string,
   content: string,
-  language: string
+  language: string,
+  conversationSummary?: string
 ): Promise<{ aiReply: string; manualTrigger: boolean }> {
+  const systemContent = conversationSummary
+    ? `${systemPrompt}\nConversation summary:\n${conversationSummary}\nLanguage: ${language}`
+    : `${systemPrompt}\nLanguage: ${language}`;
+
   const completion = await groq.chat.completions.create({
     model: 'llama-3.3-70b-versatile',
     messages: [
-      { role: 'system', content: `${systemPrompt}\nLanguage: ${language}` },
+      { role: 'system', content: systemContent },
       { role: 'user', content: content || '(message vide)' }
     ],
     temperature: 0.7,
