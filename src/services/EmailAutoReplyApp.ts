@@ -2,9 +2,9 @@ import type Groq from 'groq-sdk';
 import type { ImapFlow } from 'imapflow';
 import { decorate, inject, injectable } from 'inversify';
 import type { Transporter } from 'nodemailer';
+
 import { TYPES } from '../di/types';
 import { AccountsService } from './AccountsService';
-
 import { extractEmails, parseEmail } from './EmailParser';
 import { detectLanguage } from './LanguageDetector';
 import { sendManualForward, sendReply } from './MailSender';
@@ -24,8 +24,6 @@ export class EmailAutoReplyApp {
 
     const lock = await this.client.getMailboxLock('[Gmail]/Tous les messages');
     try {
-      const mailbox = await this.client.mailboxOpen('[Gmail]/Tous les messages');
-
       this.client.on('exists', async (data) => {
         console.log(`[MAIL] New mail detected. Total: ${data.count}`);
         const sequence = `${data.count}:*`;
