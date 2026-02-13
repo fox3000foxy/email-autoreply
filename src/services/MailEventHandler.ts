@@ -125,8 +125,6 @@ export function attachMailExistsHandler(
             const { aiReply, manualTrigger } = await generateReply(groq, systemPrompt, content, language, conversationSummary);
             console.log(`[MAIL] AI reply generated (${aiReply.length} characters).`);
 
-            await updateConversationSummary(groq, fromEmailSingle, originalDest, aiReply);
-
             if (manualTrigger) {
                 console.log('[MAIL] Manual trigger detected, forwarding.');
                 const manualReplyer = process.env.MANUAL_REPLYER;
@@ -143,6 +141,12 @@ export function attachMailExistsHandler(
 
             await sendReply(transporter, replyFrom, fromAddress, msg.envelope?.subject, aiReply, msg.envelope?.messageId);
             console.log('[MAIL] Reply sent.');
+            // Persist the AI reply into conversation memory so the assistant keeps a record
+            try {
+                await updateConversationSummary(groq, originalDest, fromEmailSingle, `AI reply:\n${aiReply}`);
+            } catch (err) {
+                console.error('[MAIL] Failed to update conversation memory with AI reply.', err);
+            }
         }
     });
 }
