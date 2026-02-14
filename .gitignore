@@ -4,3 +4,4 @@ node_modules/
 dist/
 data/customers/
 pnpm-lock.yaml
+src/old/
