@@ -23,7 +23,7 @@
     "franc": "^6.2.0",
     "groq-sdk": "^0.7.0",
     "imapflow": "^1.2.9",
-    "inversify": "^6.0.2",
+    "inversify": "^7.11.0",
     "mailparser": "^3.7.2",
     "nodemailer": "^8.0.1",
     "reflect-metadata": "^0.2.2"
