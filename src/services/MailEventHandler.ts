@@ -84,15 +84,7 @@ export function attachMailExistsHandler(
 
       const systemPrompt = `${matchedAccount.prompt}\n${accounts.getBaseSystemPrompt()}`;
 
-      const matchedRecipient =
-        targetRecipients.find((addr) => {
-          if (matchedAccount.email instanceof RegExp)
-            return matchedAccount.email.test(addr);
-          return matchedAccount.email.toLowerCase() === addr;
-        }) ||
-        (typeof matchedAccount.email === "string"
-          ? matchedAccount.email
-          : undefined);
+      const matchedRecipient = matchedAccount.email;
 
       const replyFrom = matchedRecipient
         ? `${matchedAccount.name} <${matchedRecipient}>`
@@ -150,7 +142,7 @@ export function attachMailExistsHandler(
 
       const conversationSummary = await updateConversationSummary(
         groq,
-        originalDest,
+        originalDest as string,
         fromEmailSingle,
         content,
       );
@@ -199,7 +191,7 @@ export function attachMailExistsHandler(
       try {
         await updateConversationSummary(
           groq,
-          originalDest,
+          originalDest as string,
           fromEmailSingle,
           `AI reply:\n${aiReply}`,
         );
