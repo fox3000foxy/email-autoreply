@@ -17,6 +17,8 @@ async function ensureDir(dir: string) {
 }
 
 export async function readConversationFile(originalDest: string, fromEmail: string) {
+  // Ensure the base directory exists so reads/writes won't fail when the folder is missing
+  await ensureDir(BASE);
   const dir = path.join(BASE, sanitizeSegment(originalDest));
   const file = path.join(dir, sanitizeSegment(fromEmail) + '.json');
   try {

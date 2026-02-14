@@ -23,9 +23,15 @@ export function attachMailExistsHandler(
                 .map(addr => addr.address)
                 .filter((addr): addr is string => Boolean(addr));
 
-            const isNoReply = fromAddress.some(addr => /^(do[-_]?not[-_]?reply|no[-_]?reply)@/i.test(addr));
-            if (isNoReply) {
-                console.log('[MAIL] No-reply sender ignored.');
+            // Ignore automated senders such as various no-reply forms and support/help addresses
+            const isAutomatedSender = (addr: string) => {
+                const local = (addr.split('@')[0] || '').toLowerCase();
+                return /^(?:do[-_.]?not[-_.]?reply|no[-_.]?reply|no.?reply|noreply|donotreply|support(?:[-_.+].*)?|help(?:desk)?|postmaster|mailer-daemon)/i.test(local);
+            };
+
+            const isAutomated = fromAddress.some(isAutomatedSender);
+            if (isAutomated) {
+                console.log('[MAIL] Automated/support sender ignored.');
                 continue;
             }
 
