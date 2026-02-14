@@ -29,30 +29,33 @@ export class ConfigService {
   }
 
   get imapHost(): string {
-    return process.env.IMAP_HOST || "imap.gmail.com";
+    return this.requireEnv("IMAP_HOST");
   }
 
   get imapPort(): number {
-    return process.env.IMAP_PORT ? Number(process.env.IMAP_PORT) : 993;
-  }
+    return this.requireEnv("IMAP_PORT") ? Number(this.requireEnv("IMAP_PORT")) : 993;  }
 
   get imapTls(): boolean {
-    return process.env.IMAP_TLS ? process.env.IMAP_TLS === "true" : true;
+    return this.requireEnv("IMAP_TLS") === "true";
   }
 
   get smtpHost(): string {
-    return process.env.NODEMAILER_HOST || "smtp.gmail.com";
+    return this.requireEnv("NODEMAILER_HOST") || "smtp.gmail.com";
   }
 
   get smtpPort(): number {
-    return process.env.NODEMAILER_PORT
-      ? Number(process.env.NODEMAILER_PORT)
+    return this.requireEnv("NODEMAILER_PORT")
+      ? Number(this.requireEnv("NODEMAILER_PORT"))
       : 587;
   }
 
   get smtpSecure(): boolean {
-    return process.env.NODEMAILER_SECURE
-      ? process.env.NODEMAILER_SECURE === "true"
+    return this.requireEnv("NODEMAILER_SECURE")
+      ? this.requireEnv("NODEMAILER_SECURE") === "true"
       : false;
+  }
+
+  get manualReplyer(): string {
+    return this.requireEnv("MANUAL_REPLYER");
   }
 }

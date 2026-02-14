@@ -1,6 +1,5 @@
 import { ImapFlow, ListResponse } from "imapflow";
 import { inject, injectable } from "inversify";
-import { TYPES } from "../../types";
 import { ConfigService } from "../ConfigService";
 
 @injectable()
@@ -8,7 +7,7 @@ export class ImapService {
     private client: ImapFlow | null = null;
 
     constructor(
-        @inject(TYPES.ConfigService) private configService: ConfigService,
+        @inject("ConfigService") private configService: ConfigService
     ) {
         this.client = null;
     }
@@ -30,8 +29,42 @@ export class ImapService {
     }
 
     async connect(): Promise<void> {
+        console.log("Connecting to IMAP server...");
         const client = await this.getFlow();
-        client.connect();
+        await client.connect();
+        console.log("IMAP connected");
+        const mailboxName = await this.findAllMailMailbox();
+        console.log(`Using mailbox: ${mailboxName}`);
+        const lock = await client.getMailboxLock(mailboxName);
+        try {
+            console.log(
+                "Entering IMAP IDLE loop to receive new messages (keeps mailbox lock).",
+            );
+            // Ajout d'un polling NOOP toutes les 10 secondes pendant l'IDLE
+            while (true) {
+                let idlePromise;
+                let noopInterval;
+                try {
+                    idlePromise = client.idle();
+                    noopInterval = setInterval(async () => {
+                        try {
+                            await client.noop();
+                            // console.log('[IMAP] NOOP sent');
+                        } catch (e) {
+                            console.error("[IMAP] NOOP error", e);
+                        }
+                    }, 3000); // 3 secondes
+                    await idlePromise;
+                } catch (err) {
+                    console.error("[IMAP] IDLE error, retrying in 5s", err);
+                    await new Promise((res) => setTimeout(res, 5000));
+                } finally {
+                    if (noopInterval) clearInterval(noopInterval);
+                }
+            }
+        } finally {
+            lock.release();
+        }
     }
 
     async disconnect(): Promise<void> {
@@ -51,8 +84,8 @@ export class ImapService {
             console.log(
                 `[MAILBOX] Retrieved ${Array.isArray(listResult) ? listResult.length : 0} mailboxes from server.`,
             );
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (err) {
+            console.error("[MAILBOX] Error retrieving mailboxes:", err);
             return "[Gmail]/All Mail";
         }
 
