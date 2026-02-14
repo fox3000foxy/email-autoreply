@@ -1,7 +1,7 @@
 export const TYPES = {
   ConfigService: Symbol.for("ConfigService"),
   AccountsService: Symbol.for("AccountsService"),
-  ImapClient: Symbol.for("ImapClient"),
+  ImapFlow: Symbol.for("ImapFlow"),
   MailTransporter: Symbol.for("MailTransporter"),
   GroqClient: Symbol.for("GroqClient"),
   MailboxService: Symbol.for("MailboxService"),

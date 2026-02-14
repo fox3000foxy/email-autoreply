@@ -45,10 +45,14 @@ export class ConfigService {
   }
 
   get smtpPort(): number {
-    return process.env.NODEMAILER_PORT ? Number(process.env.NODEMAILER_PORT) : 587;
+    return process.env.NODEMAILER_PORT
+      ? Number(process.env.NODEMAILER_PORT)
+      : 587;
   }
 
   get smtpSecure(): boolean {
-    return process.env.NODEMAILER_SECURE ? process.env.NODEMAILER_SECURE === "true" : false;
+    return process.env.NODEMAILER_SECURE
+      ? process.env.NODEMAILER_SECURE === "true"
+      : false;
   }
 }

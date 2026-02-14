@@ -10,7 +10,7 @@ import { MailboxService } from "./MailboxService";
 
 export class EmailAutoReplyApp {
   constructor(
-    @inject(TYPES.ImapClient) private readonly client: ImapFlow,
+    @inject(TYPES.ImapFlow) private readonly client: ImapFlow,
     @inject(TYPES.MailTransporter) private readonly transporter: Transporter,
     @inject(TYPES.GroqClient) private readonly groq: Groq,
     @inject(TYPES.AccountsService) private readonly accounts: AccountsService,
@@ -21,7 +21,7 @@ export class EmailAutoReplyApp {
   async run(): Promise<void> {
     await this.client.connect();
     console.log("IMAP connected");
-    const mailboxName = await this.mailboxService.findAllMailMailbox(this.client);
+    const mailboxName = await this.mailboxService.findAllMailMailbox();
     console.log(`Using mailbox: ${mailboxName}`);
     const lock = await this.client.getMailboxLock(mailboxName);
     try {
@@ -45,7 +45,7 @@ export class EmailAutoReplyApp {
               await this.client.noop();
               // console.log('[IMAP] NOOP sent');
             } catch (e) {
-              console.error('[IMAP] NOOP error', e);
+              console.error("[IMAP] NOOP error", e);
             }
           }, 3000); // 3 secondes
           await idlePromise;
