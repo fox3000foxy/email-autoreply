@@ -24,6 +24,18 @@ export class EmailAutoReplyApp {
     const lock = await this.client.getMailboxLock(mailboxName);
     try {
       attachMailExistsHandler(this.client, this.transporter, this.groq, this.accounts);
+      console.log('Entering IMAP IDLE loop to receive new messages (keeps mailbox lock).');
+      // Keep the mailbox lock and run IDLE to receive server push notifications.
+      // This loop runs until the process exits; on IDLE errors we wait and retry.
+      // eslint-disable-next-line no-constant-condition
+      while (true) {
+        try {
+          await this.client.idle();
+        } catch (err) {
+          console.error('[IMAP] IDLE error, retrying in 5s', err);
+          await new Promise((res) => setTimeout(res, 5000));
+        }
+      }
     } finally {
       lock.release();
     }

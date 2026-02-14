@@ -17,7 +17,7 @@ container.bind<EmailAutoReplyApp>(TYPES.EmailAutoReplyApp).to(EmailAutoReplyApp)
 container.bind<ImapFlow>(TYPES.ImapClient).toDynamicValue((ctx) => {
   const config = ctx.container.get<ConfigService>(TYPES.ConfigService);
   return new ImapFlow({
-    host: 'smtp.gmail.com',
+    host: 'imap.gmail.com',
     port: 993,
     secure: true,
     logger: false,
