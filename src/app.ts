@@ -142,6 +142,7 @@ export class App {
 
                 const { aiReply, manualTrigger } = await this.replyService.generateReply({
                     content,
+                    personaPrompt: matchedAccount.prompt,
                     originalDest: originalDest as string,
                     fromEmail: fromEmailSingle
                 });

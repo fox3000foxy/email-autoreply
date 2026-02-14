@@ -2,6 +2,7 @@ import fs from "fs";
 import Groq from "groq-sdk";
 import { inject, injectable } from "inversify";
 import path from "path";
+import { AccountsService } from "../AccountsService";
 import { SummaryService } from "./SummaryService";
 
 export const MANUAL_REPLY_TRIGGER = "<manual_reply_required>";
@@ -12,6 +13,7 @@ export class ReplyService {
 
     constructor(
         @inject("SummaryService") private summaryService: SummaryService,
+        @inject("AccountsService") private accountsService: AccountsService,
     ) {}
 
     private getGroqClient(): Groq {
@@ -28,9 +30,10 @@ export class ReplyService {
     }
 
     private async getSystemPrompt(): Promise<string> {
-        return fs
+        const systemPrompt = fs
             .readFileSync(this.resolveDataPath("base_prompt.txt"), "utf-8")
             .trim();
+        return systemPrompt;
     }
 
     private async detectLanguage(
@@ -44,15 +47,14 @@ export class ReplyService {
         return "fr";
     }
 
-
     public async generateReply(
-        options: { content: string; originalDest: string; fromEmail: string },
+        options: { content: string; originalDest: string; personaPrompt:string; fromEmail: string },
     ): Promise<{ aiReply: string; manualTrigger: boolean }> {
         const conversationSummary = await this.summaryService.getConversationSummary(options.originalDest, options.fromEmail);
         const language = await this.detectLanguage(options.content, "");
         const systemPrompt = await this.getSystemPrompt();
         const systemContent = conversationSummary
-            ? `${systemPrompt}\nConversation summary:\n${conversationSummary}\nLanguage: ${language}`
+            ? `${this.accountsService}${systemPrompt}\nConversation summary:\n${conversationSummary}\nLanguage: ${language}\nPersona prompt: ${options.personaPrompt}`
             : `${systemPrompt}\nLanguage: ${language}`;
 
         const completion = await this.getGroqClient().chat.completions.create({
