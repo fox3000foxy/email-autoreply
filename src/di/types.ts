@@ -4,5 +4,6 @@ export const TYPES = {
   ImapClient: Symbol.for('ImapClient'),
   MailTransporter: Symbol.for('MailTransporter'),
   GroqClient: Symbol.for('GroqClient'),
+  MailboxService: Symbol.for('MailboxService'),
   EmailAutoReplyApp: Symbol.for('EmailAutoReplyApp')
 } as const;

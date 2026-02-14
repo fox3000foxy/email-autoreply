@@ -6,6 +6,7 @@ import 'reflect-metadata';
 import { AccountsService } from '../services/AccountsService';
 import { ConfigService } from '../services/ConfigService';
 import { EmailAutoReplyApp } from '../services/EmailAutoReplyApp';
+import { MailboxService } from '../services/MailboxService';
 import { TYPES } from './types';
 
 const container = new Container({ defaultScope: 'Singleton' });
@@ -27,6 +28,8 @@ container.bind<ImapFlow>(TYPES.ImapClient).toDynamicValue((ctx) => {
     }
   });
 });
+
+container.bind<MailboxService>(TYPES.MailboxService).to(MailboxService);
 
 container.bind<Transporter>(TYPES.MailTransporter).toDynamicValue((ctx) => {
   const config = ctx.container.get<ConfigService>(TYPES.ConfigService);

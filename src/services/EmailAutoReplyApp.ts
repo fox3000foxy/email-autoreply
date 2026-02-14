@@ -1,25 +1,28 @@
 import type Groq from 'groq-sdk';
 import type { ImapFlow } from 'imapflow';
-import { decorate, inject, injectable } from 'inversify';
+import { inject } from 'inversify';
 import type { Transporter } from 'nodemailer';
 
 import { TYPES } from '../di/types';
 import { AccountsService } from './AccountsService';
 import { attachMailExistsHandler } from './MailEventHandler';
-import { findAllMailMailbox } from './MailboxUtils';
+import { MailboxService } from './MailboxService';
 
 export class EmailAutoReplyApp {
   constructor(
-    private readonly client: ImapFlow,
-    private readonly transporter: Transporter,
-    private readonly groq: Groq,
-    private readonly accounts: AccountsService
-  ) {}
+    @inject(TYPES.ImapClient) private readonly client: ImapFlow,
+    @inject(TYPES.MailTransporter) private readonly transporter: Transporter,
+    @inject(TYPES.GroqClient) private readonly groq: Groq,
+    @inject(TYPES.AccountsService) private readonly accounts: AccountsService,
+    @inject(TYPES.MailboxService) private readonly mailboxService: MailboxService
+  ) {
+    
+  }
 
   async run(): Promise<void> {
     await this.client.connect();
     console.log('IMAP connected');
-    const mailboxName = await findAllMailMailbox(this.client);
+    const mailboxName = await this.mailboxService.findAllMailMailbox(this.client);
     console.log(`Using mailbox: ${mailboxName}`);
     const lock = await this.client.getMailboxLock(mailboxName);
     try {
@@ -41,9 +44,3 @@ export class EmailAutoReplyApp {
     }
   }
 }
-
-decorate(injectable(), EmailAutoReplyApp);
-decorate(inject(TYPES.ImapClient), EmailAutoReplyApp, 0);
-decorate(inject(TYPES.MailTransporter), EmailAutoReplyApp, 1);
-decorate(inject(TYPES.GroqClient), EmailAutoReplyApp, 2);
-decorate(inject(TYPES.AccountsService), EmailAutoReplyApp, 3);
