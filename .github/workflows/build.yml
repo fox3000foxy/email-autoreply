@@ -21,8 +21,8 @@ jobs:
         with:
           node-version: "20"
 
-      - name: Install pnpm
-        run: npm install pnpm --force
+      # - name: Install pnpm
+      #   run: npm install pnpm --force
       
       - name: Install package dependencies
         run: npx pnpm i
