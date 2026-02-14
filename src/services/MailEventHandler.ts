@@ -2,12 +2,12 @@ import type Groq from "groq-sdk";
 import type { ImapFlow } from "imapflow";
 import type { Transporter } from "nodemailer";
 
+import { updateConversationSummary } from "../utils/ConversationMemory";
+import { extractEmails, parseEmail } from "../utils/EmailParser";
+import { detectLanguage } from "../utils/LanguageDetector";
+import { sendManualForward, sendReply } from "../utils/MailSender";
+import { generateReply } from "../utils/ReplyGenerator";
 import { AccountsService } from "./AccountsService";
-import { updateConversationSummary } from "./ConversationMemory";
-import { extractEmails, parseEmail } from "./EmailParser";
-import { detectLanguage } from "./LanguageDetector";
-import { sendManualForward, sendReply } from "./MailSender";
-import { generateReply } from "./ReplyGenerator";
 
 export function attachMailExistsHandler(
   client: ImapFlow,
