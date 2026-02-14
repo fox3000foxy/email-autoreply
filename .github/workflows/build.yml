@@ -25,7 +25,7 @@ jobs:
         run: npm install pnpm
       
       - name: Install package dependencies
-        run: npx pnpm install --include-dev
+        run: npx pnpm i
 
       - name: Lint with ESLint
         run: npm run lint
