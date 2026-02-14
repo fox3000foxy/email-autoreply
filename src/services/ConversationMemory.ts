@@ -4,11 +4,16 @@ import path from "path";
 
 const BASE = path.join(process.cwd(), "data", "customers");
 
+interface ConversationData {
+  interactions: Array<{ at: string; snippet: string }>;
+  summary: string;
+}
+
 function sanitizeSegment(s: string): string {
   return encodeURIComponent(s).replace(/%2F/g, "_");
 }
 
-async function ensureDir(dir: string) {
+async function ensureDir(dir: string): Promise<void> {
   try {
     await fs.mkdir(dir, { recursive: true });
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -16,11 +21,10 @@ async function ensureDir(dir: string) {
     // ignore
   }
 }
-
 export async function readConversationFile(
   originalDest: string,
   fromEmail: string,
-) {
+): Promise<ConversationData> {
   // Ensure the base directory exists so reads/writes won't fail when the folder is missing
   await ensureDir(BASE);
   const dir = path.join(BASE, sanitizeSegment(originalDest));
@@ -37,8 +41,8 @@ export async function readConversationFile(
 export async function writeConversationFile(
   originalDest: string,
   fromEmail: string,
-  data: object,
-) {
+  data: ConversationData,
+): Promise<void> {
   const dir = path.join(BASE, sanitizeSegment(originalDest));
   await ensureDir(dir);
   const file = path.join(dir, sanitizeSegment(fromEmail) + ".json");
