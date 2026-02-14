@@ -75,7 +75,7 @@ export function attachMailExistsHandler(
 
       const matchedAccount = targetRecipients
         .map((addr) => accounts.findAccountByEmail(addr))
-        .find(Boolean);
+        .find(addr => addr !== undefined);
 
       if (!matchedAccount) {
         console.log("[MAIL] No matching account, message ignored.");
@@ -107,12 +107,12 @@ export function attachMailExistsHandler(
 
       const timestamp = msg.envelope?.date
         ? new Date(msg.envelope.date).toLocaleString("fr-FR", {
-            hour: "2-digit",
-            minute: "2-digit",
-            day: "2-digit",
-            month: "2-digit",
-            year: "numeric",
-          })
+          hour: "2-digit",
+          minute: "2-digit",
+          day: "2-digit",
+          month: "2-digit",
+          year: "numeric",
+        })
         : "Date inconnue";
 
       console.log(
