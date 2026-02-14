@@ -39,20 +39,45 @@ pnpm run start
 
 ## Configuration
 
+
 Copy the example environment file and set your credentials:
 
 ```bash
 cp .env.example .env
 ```
 
-.env variables:
+Example `.env.example` is provided in the repo. By default, all values are set for Gmail.
 
-- `GMAIL_USER` — IMAP/SMTP login (email)
-- `GMAIL_PASS` — IMAP/SMTP password or app password
-- `GROQ_API_KEY` — API key for your Groq client (used by AI reply generator)
-- `MANUAL_REPLYER` — optional email address to forward messages that require manual handling
+**.env variables:**
 
-Example `.env.example` is provided in the repo.
+```env
+# Main configuration (.env)
+# By default, all values are set for Gmail.
+
+# --- Gmail (default IMAP/SMTP) ---
+# Gmail credentials (user and app password)
+USER=your.email@gmail.com
+PASS=your_app_password
+
+# --- Groq API (for AI) ---
+GROQ_API_KEY=sk-your-groq-key
+
+# --- SMTP (Nodemailer) ---
+# Defaults to Gmail
+NODEMAILER_HOST=smtp.gmail.com   # Gmail default SMTP host
+NODEMAILER_PORT=587              # Gmail default SMTP port
+NODEMAILER_SECURE=false          # STARTTLS (Gmail)
+
+# --- IMAP ---
+# Defaults to Gmail
+IMAP_HOST=imap.gmail.com         # Gmail default IMAP host
+IMAP_PORT=993                    # Gmail default IMAP port
+IMAP_TLS=true                    # Secure connection (TLS)
+
+# --- Optional ---
+# Email address for manual review (if needed)
+MANUAL_REPLYER=human@yourdomain.com
+```
 
 ## Accounts configuration
 

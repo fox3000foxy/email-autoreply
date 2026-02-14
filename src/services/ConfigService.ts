@@ -17,11 +17,11 @@ export class ConfigService {
   }
 
   get gmailUser(): string {
-    return this.requireEnv("GMAIL_USER");
+    return this.requireEnv("USER");
   }
 
   get gmailPass(): string {
-    return this.requireEnv("GMAIL_PASS");
+    return this.requireEnv("PASS");
   }
 
   get groqApiKey(): string {
