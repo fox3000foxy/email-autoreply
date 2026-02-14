@@ -25,7 +25,7 @@ jobs:
         run: npm install
       
       - name: Install ESLint and Prettier
-        run: npm install eslint @eslint/js globals typescript-eslint prettier
+        run: npm install eslint@9 @eslint/js globals typescript-eslint prettier
 
       - name: Lint with ESLint
         run: npm run lint
