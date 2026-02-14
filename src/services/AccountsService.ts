@@ -28,9 +28,10 @@ export class AccountsService {
   findAccountByEmail(email?: string): AccountEntry | undefined {
     if (!email) return undefined;
     const normalized = email.toLowerCase();
+    const normalizedWithoutAlias = normalized.split('+')[0]+'@'+normalized.split('@')[1];
     return this.accounts.find(entry => entry.email instanceof RegExp
-      ? entry.email.test(normalized)
-      : entry.email.toLowerCase() === normalized);
+      ? entry.email.test(normalizedWithoutAlias)
+      : entry.email.toLowerCase() === normalizedWithoutAlias);
   }
 
   private resolveDataPath(...segments: string[]) {
