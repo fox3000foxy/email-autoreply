@@ -7,6 +7,7 @@ A small Node.js/TypeScript service that connects to an IMAP account, detects inc
 - Monitor a mailbox (All Mail) across localized IMAP servers.
 - Extract sender, recipients and message content (text/html).
 - Per-account system prompts stored in `data/accounts.json`.
+- Conversation memory: the app keeps track of previous exchanges with each sender to generate more context-aware replies.
 - Optional manual-forward trigger for human review.
 - Pluggable transport via Nodemailer.
 
@@ -14,7 +15,7 @@ A small Node.js/TypeScript service that connects to an IMAP account, detects inc
 
 Prerequisites:
 
-- Node.js (16+ recommended)
+- Node.js (20+ recommended)
 - pnpm or npm
 
 Install and build:
