@@ -1,5 +1,5 @@
-import type { ImapFlow } from 'imapflow';
-import { findAllMailMailbox } from './MailboxUtils';
+import type { ImapFlow } from "imapflow";
+import { findAllMailMailbox } from "./MailboxUtils";
 
 export class MailboxService {
   async findAllMailMailbox(client: ImapFlow): Promise<string> {

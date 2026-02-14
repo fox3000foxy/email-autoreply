@@ -1,11 +1,11 @@
-import dotenv from 'dotenv';
-import { injectable } from 'inversify';
-import path from 'path';
+import dotenv from "dotenv";
+import { injectable } from "inversify";
+import path from "path";
 
 @injectable()
 export class ConfigService {
   constructor() {
-    dotenv.config({ path: path.join(process.cwd(), '.env') });
+    dotenv.config({ path: path.join(process.cwd(), ".env") });
   }
 
   private requireEnv(key: string): string {
@@ -17,14 +17,14 @@ export class ConfigService {
   }
 
   get gmailUser(): string {
-    return this.requireEnv('GMAIL_USER');
+    return this.requireEnv("GMAIL_USER");
   }
 
   get gmailPass(): string {
-    return this.requireEnv('GMAIL_PASS');
+    return this.requireEnv("GMAIL_PASS");
   }
 
   get groqApiKey(): string {
-    return this.requireEnv('GROQ_API_KEY');
+    return this.requireEnv("GROQ_API_KEY");
   }
 }

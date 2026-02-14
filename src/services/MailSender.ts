@@ -1,4 +1,4 @@
-import type { Transporter } from 'nodemailer';
+import type { Transporter } from "nodemailer";
 
 export async function sendManualForward(
   transporter: Transporter,
@@ -6,22 +6,22 @@ export async function sendManualForward(
   manualReplyer: string,
   envelopeTo: string,
   subject: string,
-  emailContent: string
+  emailContent: string,
 ): Promise<void> {
   await transporter.sendMail({
     from,
     to: manualReplyer,
-    subject: subject ? `FWD: ${subject}` : 'FWD: (sans sujet)',
+    subject: subject ? `FWD: ${subject}` : "FWD: (sans sujet)",
     text: [
-      'Manual reply required.',
-      '',
+      "Manual reply required.",
+      "",
       `From: ${from}`,
       `To: ${envelopeTo}`,
-      `Subject: ${subject || '(sans sujet)'}`,
-      '',
-      '---',
-      unescape(emailContent) || '(message vide)'
-    ].join('\n')
+      `Subject: ${subject || "(sans sujet)"}`,
+      "",
+      "---",
+      unescape(emailContent) || "(message vide)",
+    ].join("\n"),
   });
 }
 
@@ -31,14 +31,14 @@ export async function sendReply(
   to: string[] | string,
   subject: string | undefined,
   aiReply: string,
-  inReplyTo?: string
+  inReplyTo?: string,
 ): Promise<void> {
   await transporter.sendMail({
     from,
-    to: Array.isArray(to) ? to.join(', ') : to,
-    subject: subject ? `Re: ${subject}` : 'Re: (sans sujet)',
+    to: Array.isArray(to) ? to.join(", ") : to,
+    subject: subject ? `Re: ${subject}` : "Re: (sans sujet)",
     text: aiReply,
     inReplyTo,
-    references: inReplyTo ? [inReplyTo] : undefined
+    references: inReplyTo ? [inReplyTo] : undefined,
   });
 }
