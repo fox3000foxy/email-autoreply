@@ -58,15 +58,15 @@ export class SmtpService {
             from,
             to: this.manualReplyer,
             subject: subject ? `FWD: ${subject}` : "FWD: (sans sujet)",
-            text: [
-                "Manual reply required.",
+            html: [
+                "<strong>Manual reply required.</strong>",
                 "",
-                `From: ${from}`,
-                `To: ${envelopeTo}`,
-                `Subject: ${subject || "(sans sujet)"}`,
+                `<strong>From: ${from}</strong>`,
+                `<strong>To: ${envelopeTo}</strong>`,
+                `<strong>Subject: ${subject || "(sans sujet)"}</strong>`,
                 "",
                 "---",
-                unescape(emailContent) || "(message vide)",
+                emailContent || "(message vide)",
             ].join("\n"),
         });
     }
