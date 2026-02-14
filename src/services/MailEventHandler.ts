@@ -49,7 +49,7 @@ export function attachMailExistsHandler(
 
       const textContent = parsed.text || "";
       const htmlContent = parsed.html || "";
-      const language = detectLanguage(textContent, htmlContent);
+      const language = await detectLanguage(textContent, htmlContent);
       console.log(`[MAIL] Detected language: ${language}`);
 
       const headerDeliveredTo = parsed.headers?.get("delivered-to") as
