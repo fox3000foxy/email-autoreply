@@ -44,11 +44,9 @@ container.bind<Transporter>(TYPES.MailTransporter).toDynamicValue((ctx) => {
   });
 });
 
-
 container.bind<Groq>(TYPES.GroqClient).toDynamicValue((ctx) => {
   const config = ctx.container.get<ConfigService>(TYPES.ConfigService);
   return new Groq({ apiKey: config.groqApiKey });
 });
 
 export { container };
-
