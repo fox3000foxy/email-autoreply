@@ -22,7 +22,7 @@ jobs:
           node-version: "20"
 
       - name: Install dependencies
-        run: npm install --include dev
+        run: npm install --include dev --legacy-peer-deps
 
       - name: Lint with ESLint
         run: npm run lint
