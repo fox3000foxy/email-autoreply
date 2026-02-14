@@ -56,8 +56,8 @@ Example `.env.example` is provided in the repo. By default, all values are set f
 
 # --- Gmail (default IMAP/SMTP) ---
 # Gmail credentials (user and app password)
-USER=your.email@gmail.com
-PASS=your_app_password
+MAILUSER=your.email@gmail.com
+MAILPASS=your_app_password
 
 # --- Groq API (for AI) ---
 GROQ_API_KEY=sk-your-groq-key
