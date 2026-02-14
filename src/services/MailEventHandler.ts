@@ -71,8 +71,7 @@ export function attachMailExistsHandler(
         originalRecipients,
         forwardedRecipients,
         deliveredRecipients,
-        toAddress,
-      ].find((recipients) => recipients.length > 0) || [];
+      ].find((recipients) => recipients.length > 0) || toAddress;
 
       const matchedAccount = targetRecipients
         .map((addr) => accounts.findAccountByEmail(addr))
