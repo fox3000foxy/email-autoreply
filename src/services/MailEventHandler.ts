@@ -52,15 +52,9 @@ export function attachMailExistsHandler(
       const language = await detectLanguage(textContent, htmlContent);
       console.log(`[MAIL] Detected language: ${language}`);
 
-      const headerDeliveredTo = parsed.headers?.get("delivered-to") as
-        | string
-        | undefined;
-      const headerOriginalTo = parsed.headers?.get("x-original-to") as
-        | string
-        | undefined;
-      const headerForwardedTo = parsed.headers?.get("x-forwarded-to") as
-        | string
-        | undefined;
+      const headerDeliveredTo = parsed.headers?.get("delivered-to");
+      const headerOriginalTo = parsed.headers?.get("x-original-to");
+      const headerForwardedTo = parsed.headers?.get("x-forwarded-to");
 
       const intendedRecipients = extractEmails(parsed.to);
       const originalRecipients = extractEmails(headerOriginalTo);
@@ -72,15 +66,13 @@ export function attachMailExistsHandler(
         .filter((addr): addr is string => Boolean(addr))
         .map((addr) => addr.toLowerCase());
 
-      const targetRecipients = intendedRecipients.length
-        ? intendedRecipients
-        : originalRecipients.length
-          ? originalRecipients
-          : forwardedRecipients.length
-            ? forwardedRecipients
-            : deliveredRecipients.length
-              ? deliveredRecipients
-              : toAddress;
+      const targetRecipients = [
+        intendedRecipients,
+        originalRecipients,
+        forwardedRecipients,
+        deliveredRecipients,
+        toAddress,
+      ].find((recipients) => recipients.length > 0) || [];
 
       const matchedAccount = targetRecipients
         .map((addr) => accounts.findAccountByEmail(addr))
