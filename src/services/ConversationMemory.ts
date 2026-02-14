@@ -11,7 +11,7 @@ function sanitizeSegment(s: string): string {
 async function ensureDir(dir: string) {
   try {
     await fs.mkdir(dir, { recursive: true });
-  } catch (err) {
+  } catch (_err: unknown) {  // eslint-disable-line @typescript-eslint/no-unused-vars
     // ignore
   }
 }
@@ -24,12 +24,12 @@ export async function readConversationFile(originalDest: string, fromEmail: stri
   try {
     const raw = await fs.readFile(file, 'utf8');
     return JSON.parse(raw);
-  } catch (err) {
+  } catch (_err: unknown) {   // eslint-disable-line @typescript-eslint/no-unused-vars
     return { interactions: [], summary: '' };
   }
 }
 
-export async function writeConversationFile(originalDest: string, fromEmail: string, data: any) {
+export async function writeConversationFile(originalDest: string, fromEmail: string, data: object) {
   const dir = path.join(BASE, sanitizeSegment(originalDest));
   await ensureDir(dir);
   const file = path.join(dir, sanitizeSegment(fromEmail) + '.json');

@@ -30,7 +30,6 @@ export class EmailAutoReplyApp {
       console.log('Entering IMAP IDLE loop to receive new messages (keeps mailbox lock).');
       // Keep the mailbox lock and run IDLE to receive server push notifications.
       // This loop runs until the process exits; on IDLE errors we wait and retry.
-      // eslint-disable-next-line no-constant-condition
       while (true) {
         try {
           await this.client.idle();

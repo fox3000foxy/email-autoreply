@@ -8,7 +8,7 @@ export type ParsedMailLike = {
 };
 
 export async function parseEmail(source: Buffer | string): Promise<ParsedMailLike> {
-  const parsed = await simpleParser(source as any) as ParsedMailLike;
+  const parsed = await simpleParser(source) as ParsedMailLike;
   return parsed;
 }
 
