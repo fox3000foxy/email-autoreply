@@ -20,13 +20,13 @@ container
 container.bind<ImapFlow>(TYPES.ImapClient).toDynamicValue((ctx) => {
   const config = ctx.container.get<ConfigService>(TYPES.ConfigService);
   return new ImapFlow({
-    host: process.env.IMAP_HOST || "imap.gmail.com",
-    port: process.env.IMAP_PORT ? Number(process.env.IMAP_PORT) : 993,
-    secure: process.env.IMAP_TLS ? process.env.IMAP_TLS === "true" : true,
+    host: config.imapHost,
+    port: config.imapPort,
+    secure: config.imapTls,
     logger: false,
     auth: {
-      user: config.gmailUser,
-      pass: config.gmailPass,
+      user: config.user,
+      pass: config.pass,
     },
   });
 });
@@ -36,12 +36,12 @@ container.bind<MailboxService>(TYPES.MailboxService).to(MailboxService).inSingle
 container.bind<Transporter>(TYPES.MailTransporter).toDynamicValue((ctx) => {
   const config = ctx.container.get<ConfigService>(TYPES.ConfigService);
   return nodemailer.createTransport({
-    host: process.env.NODEMAILER_HOST || "smtp.gmail.com",
-    port: process.env.NODEMAILER_PORT ? Number(process.env.NODEMAILER_PORT) : 587,
-    secure: process.env.NODEMAILER_SECURE ? process.env.NODEMAILER_SECURE === "true" : false,
+    host: config.smtpHost,
+    port: config.smtpPort,
+    secure: config.smtpSecure,
     auth: {
-      user: config.gmailUser,
-      pass: config.gmailPass,
+      user: config.user,
+      pass: config.pass,
     },
   });
 });

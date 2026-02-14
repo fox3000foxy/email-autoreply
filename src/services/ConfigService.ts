@@ -16,15 +16,39 @@ export class ConfigService {
     return value;
   }
 
-  get gmailUser(): string {
+  get user(): string {
     return this.requireEnv("USER");
   }
 
-  get gmailPass(): string {
+  get pass(): string {
     return this.requireEnv("PASS");
   }
 
   get groqApiKey(): string {
     return this.requireEnv("GROQ_API_KEY");
+  }
+
+  get imapHost(): string {
+    return process.env.IMAP_HOST || "imap.gmail.com";
+  }
+
+  get imapPort(): number {
+    return process.env.IMAP_PORT ? Number(process.env.IMAP_PORT) : 993;
+  }
+
+  get imapTls(): boolean {
+    return process.env.IMAP_TLS ? process.env.IMAP_TLS === "true" : true;
+  }
+
+  get smtpHost(): string {
+    return process.env.NODEMAILER_HOST || "smtp.gmail.com";
+  }
+
+  get smtpPort(): number {
+    return process.env.NODEMAILER_PORT ? Number(process.env.NODEMAILER_PORT) : 587;
+  }
+
+  get smtpSecure(): boolean {
+    return process.env.NODEMAILER_SECURE ? process.env.NODEMAILER_SECURE === "true" : false;
   }
 }
