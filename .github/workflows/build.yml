@@ -22,7 +22,10 @@ jobs:
           node-version: "20"
 
       - name: Install dependencies
-        run: npm install --include dev --legacy-peer-deps
+        run: npm install
+      
+      - name: Install ESLint and Prettier
+        run: npm install eslint @eslint/js globals typescript-eslint prettier
 
       - name: Lint with ESLint
         run: npm run lint
