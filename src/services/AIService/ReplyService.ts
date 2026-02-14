@@ -9,7 +9,6 @@ export const MANUAL_REPLY_TRIGGER = "<manual_reply_required>";
 @injectable()
 export class ReplyService {
     private groqClient: Groq | null = null;
-    private systemPrompt: string | null = null;
 
     constructor(
         @inject("SummaryService") private summaryService: SummaryService,
