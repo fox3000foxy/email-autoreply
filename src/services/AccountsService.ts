@@ -27,9 +27,12 @@ export class AccountsService {
 
   findAccountByEmail(email?: string): AccountEntry | undefined {
     if (!email) return undefined;
+
+    console.log(`[ACCOUNTS] Looking for account matching email: ${email}`);
     const normalized = email.toLowerCase();
     const normalizedWithoutAlias =
-      normalized.split("+")[0] + "@" + normalized.split("@")[1];
+      normalized.split("@")[0].split("+")[0] + "@" + normalized.split("@")[1];
+    console.log(`[ACCOUNTS] Normalized email for matching: ${normalizedWithoutAlias}`);
     return this.accounts.find((entry) =>
       entry.email instanceof RegExp
         ? entry.email.test(normalizedWithoutAlias)

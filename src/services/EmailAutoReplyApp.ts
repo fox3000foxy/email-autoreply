@@ -21,9 +21,7 @@ export class EmailAutoReplyApp {
   async run(): Promise<void> {
     await this.client.connect();
     console.log("IMAP connected");
-    const mailboxName = await this.mailboxService.findAllMailMailbox(
-      this.client,
-    );
+    const mailboxName = await this.mailboxService.findAllMailMailbox(this.client);
     console.log(`Using mailbox: ${mailboxName}`);
     const lock = await this.client.getMailboxLock(mailboxName);
     try {
@@ -36,14 +34,26 @@ export class EmailAutoReplyApp {
       console.log(
         "Entering IMAP IDLE loop to receive new messages (keeps mailbox lock).",
       );
-      // Keep the mailbox lock and run IDLE to receive server push notifications.
-      // This loop runs until the process exits; on IDLE errors we wait and retry.
+      // Ajout d'un polling NOOP toutes les 10 secondes pendant l'IDLE
       while (true) {
+        let idlePromise;
+        let noopInterval;
         try {
-          await this.client.idle();
+          idlePromise = this.client.idle();
+          noopInterval = setInterval(async () => {
+            try {
+              await this.client.noop();
+              // console.log('[IMAP] NOOP sent');
+            } catch (e) {
+              console.error('[IMAP] NOOP error', e);
+            }
+          }, 3000); // 3 secondes
+          await idlePromise;
         } catch (err) {
           console.error("[IMAP] IDLE error, retrying in 5s", err);
           await new Promise((res) => setTimeout(res, 5000));
+        } finally {
+          if (noopInterval) clearInterval(noopInterval);
         }
       }
     } finally {

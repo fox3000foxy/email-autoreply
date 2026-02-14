@@ -11,8 +11,8 @@ import { TYPES } from "./types";
 
 const container = new Container({ defaultScope: "Singleton" });
 
-container.bind<ConfigService>(TYPES.ConfigService).to(ConfigService);
-container.bind<AccountsService>(TYPES.AccountsService).to(AccountsService);
+container.bind<ConfigService>(TYPES.ConfigService).to(ConfigService).inSingletonScope();
+container.bind<AccountsService>(TYPES.AccountsService).to(AccountsService).inSingletonScope();
 container
   .bind<EmailAutoReplyApp>(TYPES.EmailAutoReplyApp)
   .to(EmailAutoReplyApp);
@@ -31,7 +31,7 @@ container.bind<ImapFlow>(TYPES.ImapClient).toDynamicValue((ctx) => {
   });
 });
 
-container.bind<MailboxService>(TYPES.MailboxService).to(MailboxService);
+container.bind<MailboxService>(TYPES.MailboxService).to(MailboxService).inSingletonScope();
 
 container.bind<Transporter>(TYPES.MailTransporter).toDynamicValue((ctx) => {
   const config = ctx.container.get<ConfigService>(TYPES.ConfigService);
