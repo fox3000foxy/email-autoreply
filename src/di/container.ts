@@ -19,6 +19,13 @@ container
 
 container.bind<ImapFlow>(TYPES.ImapClient).toDynamicValue((ctx) => {
   const config = ctx.container.get<ConfigService>(TYPES.ConfigService);
+  console.log(`[IMAP] Creating IMAP client with config: ${JSON.stringify({
+    host: config.imapHost,
+    port: config.imapPort,
+    secure: config.imapTls,
+    user: config.user,
+    // pass is intentionally not logged for security reasons
+  })}`);
   return new ImapFlow({
     host: config.imapHost,
     port: config.imapPort,
