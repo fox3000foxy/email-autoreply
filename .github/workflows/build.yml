@@ -21,11 +21,11 @@ jobs:
         with:
           node-version: "20"
 
-      - name: Install dependencies
-        run: npm install
+      - name: Install pnpm
+        run: npm install pnpm
       
-      - name: Install ESLint and Prettier
-        run: npm install eslint@9 @eslint/js@9 globals typescript-eslint prettier
+      - name: Install package dependencies
+        run: npx pnpm install --include-dev
 
       - name: Lint with ESLint
         run: npm run lint
