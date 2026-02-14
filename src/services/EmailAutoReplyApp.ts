@@ -16,7 +16,7 @@ export class EmailAutoReplyApp {
     @inject(TYPES.AccountsService) private readonly accounts: AccountsService,
     @inject(TYPES.MailboxService)
     private readonly mailboxService: MailboxService,
-  ) { }
+  ) {}
 
   async run(): Promise<void> {
     await this.client.connect();
