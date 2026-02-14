@@ -1,9 +1,8 @@
-import { container } from "./di/container";
-import { TYPES } from "./di/types";
-import { EmailAutoReplyApp } from "./services/EmailAutoReplyApp";
+import { App } from "./app";
+import { container } from "./container";
 
-const app = container.get<EmailAutoReplyApp>(TYPES.EmailAutoReplyApp);
-app.run().catch((err) => console.error(err));
+const app: App = container.get("App");
+app.init().catch((err) => console.error(err));
 
 process.on("uncaughtException", (error) => {
   console.log("Oh my god, something terrible happened: ", error);
