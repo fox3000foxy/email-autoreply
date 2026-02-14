@@ -7,7 +7,7 @@ import { extractEmails, parseEmail } from "../utils/EmailParser";
 import { detectLanguage } from "../utils/LanguageDetector";
 import { sendManualForward, sendReply } from "../utils/MailSender";
 import { generateReply } from "../utils/ReplyGenerator";
-import { AccountsService } from "./AccountsService";
+import { AccountEntry, AccountsService } from "./AccountsService";
 
 export function attachMailExistsHandler(
   client: ImapFlow,
@@ -74,8 +74,8 @@ export function attachMailExistsHandler(
       ].find((recipients) => recipients.length > 0) || toAddress;
 
       const matchedAccount = targetRecipients
-        .map((addr) => accounts.findAccountByEmail(addr))
-        .find(addr => addr !== undefined);
+        .map((addr: string) => accounts.findAccountByEmail(addr))
+        .find((addr: AccountEntry | undefined) => addr !== undefined);
 
       if (!matchedAccount) {
         console.log("[MAIL] No matching account, message ignored.");
