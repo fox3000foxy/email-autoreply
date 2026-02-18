@@ -20,8 +20,9 @@ export class App {
     }
 
     async init(): Promise<void> {
-        const client = await this.imapService.getFlow();
-        client.on("exists", async (data) => {
+        // Use imapService.on() so the listener is re-attached on every reconnect
+        this.imapService.on("exists", async (data: { count: number }) => {
+            const client = await this.imapService.getFlow();
             console.log(`[MAIL] New mail detected. Total: ${data.count}`);
             const sequence = `${data.count}:*`;
             for await (const msg of client.fetch(sequence, {
@@ -32,26 +33,45 @@ export class App {
                     .map((addr) => addr.address)
                     .filter((addr): addr is string => Boolean(addr));
 
-                // Ignore automated senders such as various no-reply forms and support/help addresses
-                const isAutomatedSender = (addr: string) => {
-                    const local = (addr.split("@")[0] || "").toLowerCase();
-                    return /^(?:do[-_.]?not[-_.]?reply|no[-_.]?reply|no.?reply|noreply|donotreply|support(?:[-_.+].*)?|help(?:desk)?|postmaster|mailer-daemon)/i.test(
-                        local,
-                    );
-                };
-
-                const isAutomated = fromAddress.some(isAutomatedSender);
-                if (isAutomated) {
-                    console.log("[MAIL] Automated/support sender ignored.");
-                    continue;
-                }
-
                 if (!msg.source) {
                     console.log("[MAIL] Message without content ignored.");
                     continue;
                 }
 
                 const parsed = await this.parserService.parseEmail(msg.source);
+
+                // ── Automated / newsletter / info-mail detection ─────────────
+                const isAutomatedSender = (addr: string) => {
+                    const local = (addr.split("@")[0] || "").toLowerCase();
+                    return /^(?:do[-_.]?not[-_.]?reply|no[-_.]?reply|noreply|donotreply|mailer-daemon|postmaster|bounce[s]?|notifications?|news(?:letter)?|info|alert[s]?|digest|updates?|system|admin|webmaster|feedback|service|billing|receipts?|marketing|promo(?:tions?)?|support(?:[-_.+].*)?|help(?:desk)?)/i.test(
+                        local,
+                    );
+                };
+
+                // Header-based detection (Precedence, List-Unsubscribe, Auto-Submitted, X-Auto-Response-Suppress …)
+                const getHeader = (name: string): string =>
+                    (parsed.headers?.get(name) ?? "").toString().toLowerCase();
+
+                const precedence = getHeader("precedence");
+                const autoSubmitted = getHeader("auto-submitted");
+                const listUnsubscribe = getHeader("list-unsubscribe");
+                const xAutoResponseSuppress = getHeader("x-auto-response-suppress");
+                const xMailer = getHeader("x-mailer");
+
+                const isAutomatedByHeaders =
+                    ["bulk", "list", "junk"].includes(precedence) ||
+                    (autoSubmitted !== "" && autoSubmitted !== "no") ||
+                    listUnsubscribe !== "" ||
+                    xAutoResponseSuppress !== "" ||
+                    /mailchimp|sendinblue|brevo|sendgrid|mailgun|amazonses|postmark/i.test(xMailer);
+
+                const isAutomated = fromAddress.some(isAutomatedSender) || isAutomatedByHeaders;
+                if (isAutomated) {
+                    console.log(
+                        `[MAIL] Automated/newsletter sender ignored (from=${fromAddress.join(", ")}, precedence=${precedence || "none"}, list-unsubscribe=${listUnsubscribe ? "yes" : "no"}).`,
+                    );
+                    continue;
+                }
 
                 const headerDeliveredTo = parsed.headers?.get("delivered-to");
                 const headerOriginalTo = parsed.headers?.get("x-original-to");
@@ -140,7 +160,7 @@ export class App {
 
                 const fromEmailSingle = fromAddress[0] || fromDisplay;
 
-                const { aiReply, manualTrigger } = await this.replyService.generateReply({
+                const { aiReply, manualTrigger, noReply } = await this.replyService.generateReply({
                     content,
                     personaPrompt: matchedAccount.prompt,
                     originalDest: originalDest as string,
@@ -148,6 +168,13 @@ export class App {
                 });
                 console.log(`[MAIL] AI reply generated (${aiReply.length} characters).`);
 
+                // ── AI decided not to reply ──────────────────────────────────
+                if (noReply) {
+                    console.log("[MAIL] AI decided this email does not need a reply. Skipping.");
+                    continue;
+                }
+
+                // ── AI decided this needs a human ────────────────────────────
                 if (manualTrigger) {
                     console.log("[MAIL] Manual trigger detected, forwarding.");
                     const manualReplyer = process.env.MANUAL_REPLYER;
@@ -168,6 +195,7 @@ export class App {
                     continue;
                 }
 
+                // ── Normal AI reply ──────────────────────────────────────────
                 await this.smtpService.sendReply(
                     replyFrom,
                     fromAddress,

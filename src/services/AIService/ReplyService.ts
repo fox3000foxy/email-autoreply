@@ -6,6 +6,7 @@ import { AccountsService } from "../AccountsService";
 import { SummaryService } from "./SummaryService";
 
 export const MANUAL_REPLY_TRIGGER = "<manual_reply_required>";
+export const NO_REPLY_TRIGGER = "<no_reply>";
 
 @injectable()
 export class ReplyService {
@@ -49,7 +50,7 @@ export class ReplyService {
 
     public async generateReply(
         options: { content: string; originalDest: string; personaPrompt:string; fromEmail: string },
-    ): Promise<{ aiReply: string; manualTrigger: boolean }> {
+    ): Promise<{ aiReply: string; manualTrigger: boolean; noReply: boolean }> {
         const conversationSummary = await this.summaryService.getConversationSummary(options.originalDest, options.fromEmail);
         const language = await this.detectLanguage(options.content, "");
         const systemPrompt = await this.getSystemPrompt();
@@ -69,7 +70,8 @@ export class ReplyService {
 
         const aiReply = completion.choices?.[0]?.message?.content?.trim() || "salut";
         const manualTrigger = aiReply.includes(MANUAL_REPLY_TRIGGER);
-        return { aiReply, manualTrigger };
+        const noReply = aiReply.includes(NO_REPLY_TRIGGER);
+        return { aiReply, manualTrigger, noReply };
     }
 
 }
