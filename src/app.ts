@@ -257,16 +257,17 @@ export class App {
             lock = await client.getMailboxLock(mailboxName);
 
             const lastProcessedId = await this.readLastProcessedId();
-            console.log(`[ACTION] Starting batch processing with lastId=${lastProcessedId}`);
+            process.stderr.write(`[ACTION] Starting batch processing with lastId=${lastProcessedId}`);
             if (lastProcessedId === null) {
                 let latestSeenUid = 0;
-                for await (const msg of client.fetch("1:*", {
+                for await (const msg of client.fetch("*", {
                     uid: true,
                 })) {
                     latestSeenUid = Math.max(latestSeenUid, msg.uid || 0);
+                    break;
                 }
                 await this.writeLastProcessedId(latestSeenUid);
-                console.log(
+                process.stderr.write(
                     `[ACTION] Initialization complete. lastId set to latest UID ${latestSeenUid}.`,
                 );
                 return;
@@ -317,7 +318,7 @@ export class App {
         await this.smtpService.connect();
 
         if (options?.actionMode) {
-            console.log("[ACTION] Running in --action mode (no IMAP listener).");
+            process.stderr.write("[ACTION] Running in --action mode (no IMAP listener).\n");
             await this.processActionBatch();
             await this.smtpService.disconnect();
             return;
