@@ -73,21 +73,21 @@ jobs:
           MANUAL_REPLYER: ${{ secrets.MANUAL_REPLYER }}
         run: pnpm start -- --action
 
-      - name: Publish lastId to data branch (single commit)
-        shell: bash
-        run: |
-          LAST_ID_CONTENT="0"
-          if [ -f data/lastId ]; then
-            LAST_ID_CONTENT="$(cat data/lastId)"
-          fi
+    #   - name: Publish lastId to data branch (single commit)
+    #     shell: bash
+    #     run: |
+    #       LAST_ID_CONTENT="0"
+    #       if [ -f data/lastId ]; then
+    #         LAST_ID_CONTENT="$(cat data/lastId)"
+    #       fi
 
-          git switch --orphan data-tmp
-          git rm -rf . >/dev/null 2>&1 || true
-          mkdir -p data
-          printf "%s\n" "${LAST_ID_CONTENT}" > data/lastId
+    #       git switch --orphan data-tmp
+    #       git rm -rf . >/dev/null 2>&1 || true
+    #       mkdir -p data
+    #       printf "%s\n" "${LAST_ID_CONTENT}" > data/lastId
 
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add data/lastId
-          git commit -m "Update lastId - $(date +'%Y-%m-%d %H:%M:%S')"
-          git push --force origin HEAD:data
+    #       git config user.name "github-actions[bot]"
+    #       git config user.email "github-actions[bot]@users.noreply.github.com"
+    #       git add data/lastId
+    #       git commit -m "Update lastId - $(date +'%Y-%m-%d %H:%M:%S')"
+    #       git push --force origin HEAD:data
