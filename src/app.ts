@@ -257,7 +257,7 @@ export class App {
             lock = await client.getMailboxLock(mailboxName);
 
             const lastProcessedId = await this.readLastProcessedId();
-
+            console.log(`[ACTION] Starting batch processing with lastId=${lastProcessedId}`);
             if (lastProcessedId === null) {
                 let latestSeenUid = 0;
                 for await (const msg of client.fetch("1:*", {
@@ -272,35 +272,35 @@ export class App {
                 return;
             }
 
-            console.log(`[ACTION] Last processed UID: ${lastProcessedId}`);
+            // console.log(`[ACTION] Last processed UID: ${lastProcessedId}`);
 
-            let latestSeenUid = lastProcessedId;
-            for await (const msg of client.fetch("1:*", {
-                uid: true,
-                envelope: true,
-                source: true,
-            })) {
-                const typedMsg: FetchedMessage = {
-                    uid: msg.uid,
-                    envelope: msg.envelope,
-                    source: msg.source,
-                };
+            // let latestSeenUid = lastProcessedId;
+            // for await (const msg of client.fetch("1:*", {
+            //     uid: true,
+            //     envelope: true,
+            //     source: true,
+            // })) {
+            //     const typedMsg: FetchedMessage = {
+            //         uid: msg.uid,
+            //         envelope: msg.envelope,
+            //         source: msg.source,
+            //     };
 
-                const currentUid = typedMsg.uid ?? 0;
-                if (currentUid <= lastProcessedId) {
-                    continue;
-                }
+            //     const currentUid = typedMsg.uid ?? 0;
+            //     if (currentUid <= lastProcessedId) {
+            //         continue;
+            //     }
 
-                await this.processMessage(typedMsg);
-                latestSeenUid = Math.max(latestSeenUid, currentUid);
-            }
+            //     await this.processMessage(typedMsg);
+            //     latestSeenUid = Math.max(latestSeenUid, currentUid);
+            // }
 
-            if (latestSeenUid !== lastProcessedId) {
-                await this.writeLastProcessedId(latestSeenUid);
-                console.log(`[ACTION] Updated lastId to UID ${latestSeenUid}.`);
-            } else {
-                console.log("[ACTION] No new message after lastId.");
-            }
+            // if (latestSeenUid !== lastProcessedId) {
+            //     await this.writeLastProcessedId(latestSeenUid);
+            //     console.log(`[ACTION] Updated lastId to UID ${latestSeenUid}.`);
+            // } else {
+            //     console.log("[ACTION] No new message after lastId.");
+            // }
         } finally {
             if (lock) {
                 try {
