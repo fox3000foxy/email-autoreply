@@ -3,5 +3,5 @@ data/accounts.json
 node_modules/
 dist/
 data/customers/
-pnpm-lock.yaml
+# pnpm-lock.yaml
 src/old/
