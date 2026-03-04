@@ -1,4 +1,11 @@
+
 name: Build
+
+permissions:
+  contents: read
+  actions: read
+  checks: write
+  # Only allow writing checks, everything else is read-only
 
 on:
   push:
