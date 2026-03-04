@@ -7,9 +7,9 @@ import { ImapService } from "./services/MailService/ImapService";
 import { ParserService } from "./services/MailService/ParserService";
 import { SmtpService } from "./services/MailService/SmtpService";
 import {
-  isAutomatedByHeaders,
-  isAutomatedSender,
-  isValidEmail,
+    isAutomatedByHeaders,
+    isAutomatedSender,
+    isValidEmail,
 } from "./utils/MailUtils";
 
 type EnvelopeAddress = {
@@ -65,6 +65,7 @@ export class App {
       "x-auto-response-suppress",
       "x-mailer",
     ].forEach((name) => {
+      // eslint-disable-next-line security/detect-object-injection
       headersObj[name] = (parsed.headers?.get(name) ?? "")
         .toString()
         .toLowerCase();
