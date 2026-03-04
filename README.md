@@ -37,6 +37,14 @@ Run the compiled app:
 pnpm run start
 ```
 
+Run one-shot batch mode (for GitHub Actions):
+
+```bash
+pnpm run start -- --action
+```
+
+In `--action` mode, the app does not open an IMAP listener. It fetches mails, processes only messages with UID greater than `data/lastId`, then updates `data/lastId` with the latest UID seen. If `data/lastId` does not exist, it initializes it with the latest mailbox UID and does not process older messages on that first run.
+
 ## Configuration
 
 
@@ -114,8 +122,15 @@ Example `data/accounts.example.json` is provided. Copy or translate it to `data/
 
 ## Troubleshooting
 
-- If IMAP access fails, verify `GMAIL_USER`/`GMAIL_PASS` and that IMAP is enabled for the account.
+- If IMAP access fails, verify `MAILUSER`/`MAILPASS` and that IMAP is enabled for the account.
 - If mailbox selection fails for localized servers, the app tries to discover the server's All Mail folder automatically.
+
+## GitHub Actions mode
+
+- The workflow `.github/workflows/cron.yml` runs the app with `--action`.
+- It restores `data/lastId` from branch `data` before execution.
+- After execution, it force-pushes branch `data` with a single commit containing only `data/lastId`.
+- GitHub Secrets are injected as environment variables (`MAILUSER`, `MAILPASS`, `GROQ_API_KEY`, IMAP/SMTP settings, etc.), so no `.env` file is required in CI.
 
 ## Contributing
 

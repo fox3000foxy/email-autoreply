@@ -1,0 +1,78 @@
+name: Email Auto Reply Action
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  process-mails:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          persist-credentials: true
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: pnpm
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Restore lastId from data branch
+        shell: bash
+        run: |
+          mkdir -p data
+          git fetch origin data || true
+          git show origin/data:data/lastId > data/lastId || echo "0" > data/lastId
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        run: pnpm run build
+
+      - name: Process new emails in action mode
+        env:
+          MAILUSER: ${{ secrets.MAILUSER }}
+          MAILPASS: ${{ secrets.MAILPASS }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          IMAP_HOST: ${{ secrets.IMAP_HOST }}
+          IMAP_PORT: ${{ secrets.IMAP_PORT }}
+          IMAP_TLS: ${{ secrets.IMAP_TLS }}
+          NODEMAILER_HOST: ${{ secrets.NODEMAILER_HOST }}
+          NODEMAILER_PORT: ${{ secrets.NODEMAILER_PORT }}
+          NODEMAILER_SECURE: ${{ secrets.NODEMAILER_SECURE }}
+          MANUAL_REPLYER: ${{ secrets.MANUAL_REPLYER }}
+        run: pnpm start -- --action
+
+      - name: Publish lastId to data branch (single commit)
+        shell: bash
+        run: |
+          LAST_ID_CONTENT="0"
+          if [ -f data/lastId ]; then
+            LAST_ID_CONTENT="$(cat data/lastId)"
+          fi
+
+          git switch --orphan data-tmp
+          git rm -rf . >/dev/null 2>&1 || true
+          mkdir -p data
+          printf "%s\n" "${LAST_ID_CONTENT}" > data/lastId
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/lastId
+          git commit -m "Update lastId - $(date +'%Y-%m-%d %H:%M:%S')"
+          git push --force origin HEAD:data
