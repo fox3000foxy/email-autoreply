@@ -9,10 +9,10 @@ const NOOP_INTERVAL_MS = 30_000; // 30 s — generous enough to avoid spam
 @injectable()
 export class ImapService {
   private client: ImapFlow | null = null;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   private persistentListeners: Array<{
     event: string;
-    handler: (...args: any[]) => void;
+    handler: (...args: unknown[]) => void;
   }> = [];
 
   constructor(@inject("ConfigService") private configService: ConfigService) {
