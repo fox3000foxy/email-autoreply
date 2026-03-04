@@ -6,7 +6,7 @@ import { LastIdService } from "./services/LastIdService";
 import { ImapService } from "./services/MailService/ImapService";
 import { ParserService } from "./services/MailService/ParserService";
 import { SmtpService } from "./services/MailService/SmtpService";
-import { isAutomatedByHeaders, isAutomatedSender } from "./utils/MailUtils";
+import { isAutomatedByHeaders, isAutomatedSender, isValidEmail } from "./utils/MailUtils";
 
 type EnvelopeAddress = {
     address?: string;
@@ -71,14 +71,15 @@ export class App {
         const headerOriginalTo = parsed.headers?.get("x-original-to");
         const headerForwardedTo = parsed.headers?.get("x-forwarded-to");
 
-        const intendedRecipients = this.parserService.extractEmails(parsed.to);
-        const originalRecipients = this.parserService.extractEmails(headerOriginalTo);
-        const forwardedRecipients = this.parserService.extractEmails(headerForwardedTo);
-        const deliveredRecipients = this.parserService.extractEmails(headerDeliveredTo);
+        const intendedRecipients = this.parserService.extractEmails(parsed.to).filter(isValidEmail);
+        const originalRecipients = this.parserService.extractEmails(headerOriginalTo).filter(isValidEmail);
+        const forwardedRecipients = this.parserService.extractEmails(headerForwardedTo).filter(isValidEmail);
+        const deliveredRecipients = this.parserService.extractEmails(headerDeliveredTo).filter(isValidEmail);
 
         const toAddress = (msg.envelope?.to || [])
             .map((addr) => addr.address)
             .filter((addr): addr is string => Boolean(addr))
+            .filter(isValidEmail)
             .map((addr) => addr.toLowerCase());
 
         const targetRecipients = [
