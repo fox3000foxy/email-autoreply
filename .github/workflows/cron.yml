@@ -36,6 +36,23 @@ jobs:
           git fetch origin data || true
           git show origin/data:data/lastId > data/lastId || echo "0" > data/lastId
 
+      - name: Prepare accounts config
+        shell: bash
+        env:
+          ACCOUNTS_JSON: ${{ secrets.ACCOUNTS_JSON }}
+        run: |
+          mkdir -p data
+          if [ -n "${ACCOUNTS_JSON:-}" ]; then
+            printf "%s" "$ACCOUNTS_JSON" > data/accounts.json
+          elif [ -f data/accounts.example.json ]; then
+            cp data/accounts.example.json data/accounts.json
+          else
+            echo "Missing accounts config: define secret ACCOUNTS_JSON or commit data/accounts.example.json"
+            exit 1
+          fi
+
+          node -e "JSON.parse(require('node:fs').readFileSync('data/accounts.json','utf8'))"
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
