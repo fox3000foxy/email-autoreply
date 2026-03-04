@@ -10,69 +10,75 @@ export const NO_REPLY_TRIGGER = "<no_reply>";
 
 @injectable()
 export class ReplyService {
-    private groqClient: Groq | null = null;
+  private groqClient: Groq | null = null;
 
-    constructor(
-        @inject("SummaryService") private summaryService: SummaryService,
-        @inject("AccountsService") private accountsService: AccountsService,
-    ) {}
+  constructor(
+    @inject("SummaryService") private summaryService: SummaryService,
+    @inject("AccountsService") private accountsService: AccountsService,
+  ) {}
 
-    private getGroqClient(): Groq {
-        if (!this.groqClient) {
-            this.groqClient = new Groq({
-                apiKey: process.env.GROQ_API_KEY || "",
-            });
-        }
-        return this.groqClient;
+  private getGroqClient(): Groq {
+    if (!this.groqClient) {
+      this.groqClient = new Groq({
+        apiKey: process.env.GROQ_API_KEY || "",
+      });
     }
+    return this.groqClient;
+  }
 
-    private resolveDataPath(...segments: string[]) {
-        return path.resolve(process.cwd(), "data", ...segments);
-    }
+  private resolveDataPath(...segments: string[]) {
+    return path.resolve(process.cwd(), "data", ...segments);
+  }
 
-    private async getSystemPrompt(): Promise<string> {
-        const systemPrompt = fs
-            .readFileSync(this.resolveDataPath("base_prompt.txt"), "utf-8")
-            .trim();
-        return systemPrompt;
-    }
+  private async getSystemPrompt(): Promise<string> {
+    const systemPrompt = fs
+      .readFileSync(this.resolveDataPath("base_prompt.txt"), "utf-8")
+      .trim();
+    return systemPrompt;
+  }
 
-    private async detectLanguage(
-        textContent: string,
-        htmlContent: string,
-    ): Promise<string> {
-        const franc = (await import("franc")).franc;
-        const detected = franc(`${textContent} ${htmlContent}`, { minLength: 20 });
-        if (detected === "fra") return "fr";
-        if (detected === "eng") return "en";
-        return "fr";
-    }
+  private async detectLanguage(
+    textContent: string,
+    htmlContent: string,
+  ): Promise<string> {
+    const franc = (await import("franc")).franc;
+    const detected = franc(`${textContent} ${htmlContent}`, { minLength: 20 });
+    if (detected === "fra") return "fr";
+    if (detected === "eng") return "en";
+    return "fr";
+  }
 
-    public async generateReply(
-        options: { content: string; originalDest: string; personaPrompt:string; fromEmail: string },
-    ): Promise<{ aiReply: string; manualTrigger: boolean; noReply: boolean }> {
-        const conversationSummary = await this.summaryService.getConversationSummary(options.originalDest, options.fromEmail);
-        const language = await this.detectLanguage(options.content, "");
-        const systemPrompt = await this.getSystemPrompt();
-        const systemContent = conversationSummary
-            ? `${this.accountsService}${systemPrompt}\nConversation summary:\n${conversationSummary}\nLanguage: ${language}\nPersona prompt: ${options.personaPrompt}`
-            : `${systemPrompt}\nLanguage: ${language}`;
+  public async generateReply(options: {
+    content: string;
+    originalDest: string;
+    personaPrompt: string;
+    fromEmail: string;
+  }): Promise<{ aiReply: string; manualTrigger: boolean; noReply: boolean }> {
+    const conversationSummary =
+      await this.summaryService.getConversationSummary(
+        options.originalDest,
+        options.fromEmail,
+      );
+    const language = await this.detectLanguage(options.content, "");
+    const systemPrompt = await this.getSystemPrompt();
+    const systemContent = conversationSummary
+      ? `${this.accountsService}${systemPrompt}\nConversation summary:\n${conversationSummary}\nLanguage: ${language}\nPersona prompt: ${options.personaPrompt}`
+      : `${systemPrompt}\nLanguage: ${language}`;
 
-        const completion = await this.getGroqClient().chat.completions.create({
-            model: "llama-3.3-70b-versatile",
-            messages: [
-                { role: "system", content: systemContent },
-                { role: "user", content: options.content || "(message vide)" },
-            ],
-            temperature: 0.7,
-            max_tokens: 200,
-        });
+    const completion = await this.getGroqClient().chat.completions.create({
+      model: "llama-3.3-70b-versatile",
+      messages: [
+        { role: "system", content: systemContent },
+        { role: "user", content: options.content || "(message vide)" },
+      ],
+      temperature: 0.7,
+      max_tokens: 200,
+    });
 
-        const aiReply = completion.choices?.[0]?.message?.content?.trim() || "salut";
-        const manualTrigger = aiReply.includes(MANUAL_REPLY_TRIGGER);
-        const noReply = aiReply.includes(NO_REPLY_TRIGGER);
-        return { aiReply, manualTrigger, noReply };
-    }
-
+    const aiReply =
+      completion.choices?.[0]?.message?.content?.trim() || "salut";
+    const manualTrigger = aiReply.includes(MANUAL_REPLY_TRIGGER);
+    const noReply = aiReply.includes(NO_REPLY_TRIGGER);
+    return { aiReply, manualTrigger, noReply };
+  }
 }
-

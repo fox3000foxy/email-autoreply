@@ -9,11 +9,22 @@ export class ConfigService {
   }
 
   private requireEnv(key: string): string {
-    const allowedKeys = ["MAILUSER", "MAILPASS", "GROQ_API_KEY", "IMAP_HOST", "IMAP_PORT", "IMAP_TLS", "NODEMAILER_HOST", "NODEMAILER_PORT", "NODEMAILER_SECURE", "MANUAL_REPLYER"] as const;
-    if (!allowedKeys.includes(key as typeof allowedKeys[number])) {
+    const allowedKeys = [
+      "MAILUSER",
+      "MAILPASS",
+      "GROQ_API_KEY",
+      "IMAP_HOST",
+      "IMAP_PORT",
+      "IMAP_TLS",
+      "NODEMAILER_HOST",
+      "NODEMAILER_PORT",
+      "NODEMAILER_SECURE",
+      "MANUAL_REPLYER",
+    ] as const;
+    if (!allowedKeys.includes(key as (typeof allowedKeys)[number])) {
       throw new Error(`${key} is not a valid environment variable.`);
     }
-    const value = process.env[key as typeof allowedKeys[number]];
+    const value = process.env[key as (typeof allowedKeys)[number]];
     if (!value) {
       throw new Error(`${key} manquant.`);
     }
@@ -37,7 +48,10 @@ export class ConfigService {
   }
 
   get imapPort(): number {
-    return this.requireEnv("IMAP_PORT") ? Number(this.requireEnv("IMAP_PORT")) : 993;  }
+    return this.requireEnv("IMAP_PORT")
+      ? Number(this.requireEnv("IMAP_PORT"))
+      : 993;
+  }
 
   get imapTls(): boolean {
     return this.requireEnv("IMAP_TLS") === "true";

@@ -12,9 +12,9 @@ import { SmtpService } from "./services/MailService/SmtpService";
 
 const container = new Container({ defaultScope: "Singleton" });
 
-container.bind<ConfigService>("ConfigService").to(ConfigService)
-container.bind<AccountsService>("AccountsService").to(AccountsService)
-container.bind<ParserService>("ParserService").to(ParserService)
+container.bind<ConfigService>("ConfigService").to(ConfigService);
+container.bind<AccountsService>("AccountsService").to(AccountsService);
+container.bind<ParserService>("ParserService").to(ParserService);
 container.bind<ImapService>("ImapService").to(ImapService);
 container.bind<SmtpService>("SmtpService").to(SmtpService);
 container.bind<SummaryService>("SummaryService").to(SummaryService);
@@ -22,4 +22,3 @@ container.bind<ReplyService>("ReplyService").to(ReplyService);
 container.bind<App>("App").to(App);
 
 export { container };
-
