@@ -32,7 +32,7 @@ export class AccountsService {
                 ? entry.email.test(normalizedWithoutAlias)
                 : entry.email.toLowerCase() === normalizedWithoutAlias,
         );
-        if(isExisting) {
+        if (isExisting) {
             console.log(`[ACCOUNTS] Found matching account: ${isExisting.name} <${isExisting.email}>`);
             return {
                 ...isExisting,
@@ -64,6 +64,7 @@ export class AccountsService {
                 typeof rawEmail === "string" &&
                 rawEmail.startsWith("regex:")
             ) {
+                // eslint-disable-next-line security/detect-non-literal-regexp
                 email = new RegExp(rawEmail.replace(/^regex:/, ""));
             } else if (typeof rawEmail === "string") {
                 email = rawEmail;

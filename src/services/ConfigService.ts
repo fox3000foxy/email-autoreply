@@ -9,7 +9,11 @@ export class ConfigService {
   }
 
   private requireEnv(key: string): string {
-    const value = process.env[key];
+    const allowedKeys = ["MAILUSER", "MAILPASS", "GROQ_API_KEY", "IMAP_HOST", "IMAP_PORT", "IMAP_TLS", "NODEMAILER_HOST", "NODEMAILER_PORT", "NODEMAILER_SECURE", "MANUAL_REPLYER"] as const;
+    if (!allowedKeys.includes(key as typeof allowedKeys[number])) {
+      throw new Error(`${key} is not a valid environment variable.`);
+    }
+    const value = process.env[key as typeof allowedKeys[number]];
     if (!value) {
       throw new Error(`${key} manquant.`);
     }

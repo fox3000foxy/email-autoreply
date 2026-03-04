@@ -2,7 +2,22 @@
 
 export function isAutomatedSender(address: string): boolean {
     const local = (address.split("@")[0] || "").toLowerCase();
-    return /^(?:do[-_.]?not[-_.]?reply|no[-_.]?reply|noreply|donotreply|mailer-daemon|postmaster|bounce[s]?|notifications?|news(?:letter)?|info|alert[s]?|digest|updates?|system|admin|webmaster|feedback|service|billing|receipts?|marketing|promo(?:tions?)?|support(?:[-_.+].*)?|help(?:desk)?)/i.test(local);
+    const automatedPatterns = [
+        "donotreply", "do-not-reply", "do_not_reply",
+        "noreply", "no-reply", "no_reply",
+        "mailer-daemon", "postmaster",
+        "bounce", "bounces",
+        "notification", "notifications",
+        "newsletter", "news",
+        "info", "alert", "alerts",
+        "digest", "update", "updates",
+        "system", "admin", "webmaster",
+        "feedback", "service", "billing",
+        "receipt", "receipts",
+        "marketing", "promo", "promotion", "promotions",
+        "support", "help", "helpdesk"
+    ];
+    return automatedPatterns.some(pattern => local.includes(pattern));
 }
 
 export function isValidEmail(address: string): boolean {
