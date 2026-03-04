@@ -49,7 +49,7 @@ export class App {
         try {
             const content = await fs.readFile(filePath, "utf-8");
             const parsedId = Number(content.trim());
-            return Number.isFinite(parsedId) && parsedId > 0 ? parsedId : 0;
+            return Number.isFinite(parsedId) && parsedId > 0 ? parsedId : null;
         } catch {
             return null;
         }
