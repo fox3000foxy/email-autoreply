@@ -260,11 +260,13 @@ export class App {
             process.stderr.write(`[ACTION] Starting batch processing with lastId=${lastProcessedId}`);
             if (lastProcessedId === null) {
                 let latestSeenUid = 0;
-                for await (const msg of client.fetch("*", {
-                    uid: true,
-                })) {
-                    latestSeenUid = Math.max(latestSeenUid, msg.uid || 0);
-                    break;
+                const mailbox = await client.mailboxOpen(mailboxName);
+                if (mailbox.exists > 0) {
+                    const seq = `${mailbox.exists}:*`;
+                    for await (const msg of client.fetch(seq, { uid: true })) {
+                        latestSeenUid = msg.uid || 0;
+                        break;
+                    }
                 }
                 await this.writeLastProcessedId(latestSeenUid);
                 process.stderr.write(
@@ -273,35 +275,38 @@ export class App {
                 return;
             }
 
-            // console.log(`[ACTION] Last processed UID: ${lastProcessedId}`);
+            process.stderr.write(`[ACTION] Last processed UID: ${lastProcessedId}`);
 
-            // let latestSeenUid = lastProcessedId;
-            // for await (const msg of client.fetch("1:*", {
-            //     uid: true,
-            //     envelope: true,
-            //     source: true,
-            // })) {
-            //     const typedMsg: FetchedMessage = {
-            //         uid: msg.uid,
-            //         envelope: msg.envelope,
-            //         source: msg.source,
-            //     };
+            let latestSeenUid = lastProcessedId;
+            const uidRange = `${lastProcessedId + 1}:*`;
+            for await (const msg of client.fetch(uidRange, {
+                uid: true,
+                envelope: true,
+                source: true,
+            }, {
+                uid: true,
+            })) {
+                const typedMsg: FetchedMessage = {
+                    uid: msg.uid,
+                    envelope: msg.envelope,
+                    source: msg.source,
+                };
 
-            //     const currentUid = typedMsg.uid ?? 0;
-            //     if (currentUid <= lastProcessedId) {
-            //         continue;
-            //     }
+                const currentUid = typedMsg.uid ?? 0;
+                if (currentUid <= lastProcessedId) {
+                    continue;
+                }
 
-            //     await this.processMessage(typedMsg);
-            //     latestSeenUid = Math.max(latestSeenUid, currentUid);
-            // }
+                await this.processMessage(typedMsg);
+                latestSeenUid = Math.max(latestSeenUid, currentUid);
+            }
 
-            // if (latestSeenUid !== lastProcessedId) {
-            //     await this.writeLastProcessedId(latestSeenUid);
-            //     console.log(`[ACTION] Updated lastId to UID ${latestSeenUid}.`);
-            // } else {
-            //     console.log("[ACTION] No new message after lastId.");
-            // }
+            if (latestSeenUid !== lastProcessedId) {
+                await this.writeLastProcessedId(latestSeenUid);
+                process.stderr.write(`[ACTION] Updated lastId to UID ${latestSeenUid}.`);
+            } else {
+                process.stderr.write(`[ACTION] No new message after lastId.`);
+            }
         } finally {
             if (lock) {
                 try {
