@@ -1,12 +1,12 @@
 import { inject, injectable } from "inversify";
-import { promises as fs } from "node:fs";
-import path from "node:path";
 import { AccountEntry, AccountsService } from "./services/AccountsService";
 import { ReplyService } from "./services/AIService/ReplyService";
 import { SummaryService } from "./services/AIService/SummaryService";
+import { LastIdService } from "./services/LastIdService";
 import { ImapService } from "./services/MailService/ImapService";
 import { ParserService } from "./services/MailService/ParserService";
 import { SmtpService } from "./services/MailService/SmtpService";
+import { isAutomatedByHeaders, isAutomatedSender } from "./utils/MailUtils";
 
 type EnvelopeAddress = {
     address?: string;
@@ -40,26 +40,7 @@ export class App {
 
     }
 
-    private getLastIdPath(): string {
-        return path.resolve(process.cwd(), "data", "lastId");
-    }
-
-    private async readLastProcessedId(): Promise<number | null> {
-        const filePath = this.getLastIdPath();
-        try {
-            const content = await fs.readFile(filePath, "utf-8");
-            const parsedId = Number(content.trim());
-            return Number.isFinite(parsedId) && parsedId > 0 ? parsedId : null;
-        } catch {
-            return null;
-        }
-    }
-
-    private async writeLastProcessedId(id: number): Promise<void> {
-        const filePath = this.getLastIdPath();
-        await fs.mkdir(path.dirname(filePath), { recursive: true });
-        await fs.writeFile(filePath, `${id}\n`, "utf-8");
-    }
+    private lastIdService = new LastIdService();
 
     private async processMessage(msg: FetchedMessage): Promise<void> {
         const fromAddress = (msg.envelope?.from || [])
@@ -72,34 +53,16 @@ export class App {
         }
 
         const parsed = await this.parserService.parseEmail(msg.source);
-
-        const isAutomatedSender = (addr: string) => {
-            const local = (addr.split("@")[0] || "").toLowerCase();
-            return /^(?:do[-_.]?not[-_.]?reply|no[-_.]?reply|noreply|donotreply|mailer-daemon|postmaster|bounce[s]?|notifications?|news(?:letter)?|info|alert[s]?|digest|updates?|system|admin|webmaster|feedback|service|billing|receipts?|marketing|promo(?:tions?)?|support(?:[-_.+].*)?|help(?:desk)?)/i.test(
-                local,
-            );
-        };
-
-        const getHeader = (name: string): string =>
-            (parsed.headers?.get(name) ?? "").toString().toLowerCase();
-
-        const precedence = getHeader("precedence");
-        const autoSubmitted = getHeader("auto-submitted");
-        const listUnsubscribe = getHeader("list-unsubscribe");
-        const xAutoResponseSuppress = getHeader("x-auto-response-suppress");
-        const xMailer = getHeader("x-mailer");
-
-        const isAutomatedByHeaders =
-            ["bulk", "list", "junk"].includes(precedence) ||
-            (autoSubmitted !== "" && autoSubmitted !== "no") ||
-            listUnsubscribe !== "" ||
-            xAutoResponseSuppress !== "" ||
-            /mailchimp|sendinblue|brevo|sendgrid|mailgun|amazonses|postmark/i.test(xMailer);
-
-        const isAutomated = fromAddress.some(isAutomatedSender) || isAutomatedByHeaders;
+        
+        // Prepare headers for utility
+        const headersObj: Record<string, string> = {};
+        ["precedence", "auto-submitted", "list-unsubscribe", "x-auto-response-suppress", "x-mailer"].forEach((name) => {
+            headersObj[name] = (parsed.headers?.get(name) ?? "").toString().toLowerCase();
+        });
+        const isAutomated = fromAddress.some(isAutomatedSender) || isAutomatedByHeaders(headersObj);
         if (isAutomated) {
             console.log(
-                `[MAIL] Automated/newsletter sender ignored (from=${fromAddress.join(", ")}, precedence=${precedence || "none"}, list-unsubscribe=${listUnsubscribe ? "yes" : "no"}).`,
+                `[MAIL] Automated/newsletter sender ignored (from=${fromAddress.join(", ")}, precedence=${headersObj["precedence"] || "none"}, list-unsubscribe=${headersObj["list-unsubscribe"] ? "yes" : "no"}).`,
             );
             return;
         }
@@ -256,7 +219,7 @@ export class App {
             const mailboxName = await this.imapService.findAllMailMailbox();
             lock = await client.getMailboxLock(mailboxName);
 
-            const lastProcessedId = await this.readLastProcessedId();
+            const lastProcessedId = await this.lastIdService.read();
             process.stderr.write(`[ACTION] Starting batch processing with lastId=${lastProcessedId}`);
             if (lastProcessedId === null) {
                 let latestSeenUid = 0;
@@ -268,7 +231,7 @@ export class App {
                         break;
                     }
                 }
-                await this.writeLastProcessedId(latestSeenUid);
+                await this.lastIdService.write(latestSeenUid);
                 process.stderr.write(
                     `[ACTION] Initialization complete. lastId set to latest UID ${latestSeenUid}.`,
                 );
@@ -302,7 +265,7 @@ export class App {
             }
 
             if (latestSeenUid !== lastProcessedId) {
-                await this.writeLastProcessedId(latestSeenUid);
+                await this.lastIdService.write(latestSeenUid);
                 process.stderr.write(`[ACTION] Updated lastId to UID ${latestSeenUid}.`);
             } else {
                 process.stderr.write(`[ACTION] No new message after lastId.`);
