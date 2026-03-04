@@ -34,7 +34,7 @@ jobs:
         run: |
           mkdir -p data
           git fetch origin data || true
-          git show origin/data:data/lastId > data/lastId || echo "0" > data/lastId
+          git show origin/data:data/lastId > data/lastId || true
 
       - name: Prepare accounts config
         shell: bash
