@@ -1,49 +1,58 @@
-import { App } from "./app";
+import type { App } from "./app";
 import { container } from "./container";
 
-const actionMode = process.argv.includes("--action");
-const writeGenericActionFailure = () => {
+const isActionMode = process.argv.includes("--action");
+
+const writeGenericActionFailure = (): void => {
   process.stderr.write("Action failed\n");
 };
 
-if (actionMode) {
-  const noop = () => undefined;
+const muteConsole = (): void => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const noop = (..._args: unknown[]): void => undefined;
   console.log = noop;
   console.info = noop;
   console.warn = noop;
   console.error = noop;
   console.debug = noop;
+};
+
+const reportError = (label: string, error: unknown): void => {
+  if (error instanceof Error) {
+    console.error(`${label}: ${error.message}`);
+    if (error.stack) console.error(error.stack);
+    return;
+  }
+  console.error(`${label}:`, error);
+};
+
+const handleFatalError = (error: unknown): void => {
+  if (isActionMode) {
+    writeGenericActionFailure();
+  } else {
+    reportError("Fatal error", error);
+  }
+  process.exitCode = 1;
+};
+
+if (isActionMode) {
+  muteConsole();
 }
 
-const app: App = container.get("App");
+const main = async (): Promise<void> => {
+  const app = container.get<App>("App");
+  await app.init({ actionMode: isActionMode });
+};
 
-app.init({ actionMode }).catch((err) => {
-  if (actionMode) {
-    writeGenericActionFailure();
-  } else {
-    console.error(err);
-  }
-  process.exitCode = 1;
-});
+void main().catch(handleFatalError);
 
 process.on("uncaughtException", (error) => {
-  if (actionMode) {
-    writeGenericActionFailure();
-  } else {
-    console.log("Oh my god, something terrible happened: ", error);
-  }
-  process.exitCode = 1;
+  handleFatalError(error);
 });
 
-process.on("unhandledRejection", (error, promise) => {
-  if (actionMode) {
-    writeGenericActionFailure();
-  } else {
-    console.log(
-      " Oh Lord! We forgot to handle a promise rejection here: ",
-      promise,
-    );
-    console.log(" The error was: ", error);
+process.on("unhandledRejection", (reason, promise) => {
+  if (!isActionMode) {
+    console.error("Unhandled promise rejection at:", promise);
   }
-  process.exitCode = 1;
+  handleFatalError(reason);
 });
