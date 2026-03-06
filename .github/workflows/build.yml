@@ -60,4 +60,5 @@ jobs:
           cp -r "$TMPDIR"/* .
           git add dist node_modules package.json pnpm-lock.yaml
           git commit -m "runtime build for ${GITHUB_SHA}"
-          git push --force origin HEAD:runtime
+          # push via token since bot user lacks permissions otherwise
+          git push --force "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}" HEAD:runtime
