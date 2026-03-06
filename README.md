@@ -321,17 +321,27 @@ In `--action` mode, the app does not open an IMAP listener. It fetches only new 
 
 ## GitHub Actions & Secrets
 
+> ⚡ **Precompiled runtime**
+>
+> The build workflow automatically produces a `runtime` branch containing the `dist` folder and `node_modules`. The cron workflow checks out that branch instead of rebuilding from scratch, cutting run time from about 20 s to 10 s.
+>
+
 This template includes a ready-to-use GitHub Actions workflow (`.github/workflows/cron.yml`) for automated batch processing.
 
 ### Workflow overview
+
+The repository includes two actions: a standard build job and a cron processor. The build job not only lints and compiles the source, but also **prepares a runtime branch** containing the compiled output and `node_modules` so that the cron workflow can run in about **10 seconds instead of ~20**.
 
 1. **Checkout repository**
 2. **Setup Node.js & pnpm**
 3. **Restore `lastId` from `data` branch**
 4. **Prepare accounts config from secret**
-5. **Install & build**
+5. **Install & build** (the build job also publishes a `runtime` branch)
 6. **Process new emails in action mode**
-7. **Publish updated `lastId` to `data` branch**
+7. **Publish updated `lastId` to `data` branch`
+
+> When you **use this template** or **fork** the repo, the `build.yml` workflow will automatically run on the first push to `master` (you can also trigger it manually via _Actions → Build → Run workflow_). That initial run generates the runtime snapshot with compiled code + dependencies; the cron job then consumes that branch, shaving roughly half the execution time.
+
 
 > [!NOTE]
 > The workflow is idempotent: it never processes the same email twice. On first run, no old emails are processed.
