@@ -89,5 +89,3 @@ jobs:
           git commit -m "lastId snapshot for ${GITHUB_SHA}"
           git tag -f lastid
           git push --force "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}" lastid
-          git checkout master
-          git branch -D lastid-tmp || true
