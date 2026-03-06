@@ -43,23 +43,27 @@ jobs:
         run: pnpm run build
 
       - name: Publish runtime snapshot
-        # push compiled code + node_modules to a dedicated branch for cron job
+        # create/update a lightweight tag containing compiled code + node_modules
         shell: bash
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          # copy build result somewhere safe before wiping worktree
+          # stash build output before touching git state
           TMPDIR=$(mktemp -d)
           cp -r dist node_modules package.json pnpm-lock.yaml "$TMPDIR/" || true
 
-          # switch to an empty orphan branch
-          git checkout --orphan runtime
+          # create temporary branch so git commit works, then tag that commit
+          git checkout --orphan temp-runtime
           git rm -rf . >/dev/null 2>&1 || true
-
-          # restore the artifacts from temp location
           cp -r "$TMPDIR"/* .
           git add dist node_modules package.json pnpm-lock.yaml
           git commit -m "runtime build for ${GITHUB_SHA}"
-          # push via token since bot user lacks permissions otherwise
-          git push --force "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}" HEAD:runtime
+
+          # force-create tag pointing at this commit
+          git tag -f runtime
+          # push tag via token
+          git push --force "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}" runtime
+          # delete temporary branch locally
+          git checkout master
+          git branch -D temp-runtime || true
