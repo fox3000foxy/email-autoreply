@@ -8,13 +8,14 @@ const writeGenericActionFailure = (): void => {
 };
 
 const muteConsole = (): void => {
+  // In action mode we want to suppress noisy logs, but keeping stderr/error
+  // output is helpful for debugging failures.  Only silence log/info/debug.
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const noop = (..._args: unknown[]): void => undefined;
   console.log = noop;
   console.info = noop;
-  console.warn = noop;
-  console.error = noop;
   console.debug = noop;
+  // leave console.warn and console.error intact so errors surface
 };
 
 const reportError = (label: string, error: unknown): void => {
