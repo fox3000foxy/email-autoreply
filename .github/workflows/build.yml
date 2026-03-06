@@ -2,10 +2,10 @@
 name: Build
 
 permissions:
-  contents: read
+  contents: write           # needed for GITHUB_TOKEN to push the runtime branch
   actions: read
   checks: write
-  # Only allow writing checks, everything else is read-only
+  # Only allow writing checks; contents write is granted explicitly for the push step
 
 on:
   push:
