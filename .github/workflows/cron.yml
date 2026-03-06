@@ -13,27 +13,20 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: Checkout runtime snapshot
         uses: actions/checkout@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           persist-credentials: true
+          ref: runtime          # pull the pre-built branch
           fetch-depth: 1
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: "20"
-          cache: pnpm
 
-      - name: Cache pnpm
-        uses: actions/cache@v3
-        with:
-          path: ~/.pnpm-store
-          key: ${{ runner.os }}-pnpm-${{ hashFiles('**/pnpm-lock.yaml') }}
+      # pnpm and caching not required: runtime branch already contains node_modules
 
       - name: Restore lastId from data branch
         shell: bash
@@ -59,11 +52,7 @@ jobs:
 
           node -e "JSON.parse(require('node:fs').readFileSync('data/accounts.json','utf8'))"
 
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Build
-        run: pnpm run build
+      # dependencies and build are skipped, code already compiled in runtime branch
 
       - name: Process new emails in action mode
         env:
@@ -77,7 +66,8 @@ jobs:
           NODEMAILER_PORT: ${{ secrets.NODEMAILER_PORT }}
           NODEMAILER_SECURE: ${{ secrets.NODEMAILER_SECURE }}
           MANUAL_REPLYER: ${{ secrets.MANUAL_REPLYER }}
-        run: pnpm start -- --action
+        # runtime branch already contains node_modules so call node directly
+        run: node dist/index.js --action
 
       - name: Publish lastId to data branch (single commit)
         shell: bash
