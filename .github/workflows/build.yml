@@ -64,6 +64,4 @@ jobs:
           git tag -f runtime
           # push tag via token
           git push --force "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}" runtime
-          # delete temporary branch locally
-          git checkout master
-          git branch -D temp-runtime || true
+          # temporary orphan branch can be garbage-collected automatically
