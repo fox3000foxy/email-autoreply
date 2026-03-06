@@ -47,11 +47,17 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          # switch to an empty orphan branch, then populate from master
+
+          # copy build result somewhere safe before wiping worktree
+          TMPDIR=$(mktemp -d)
+          cp -r dist node_modules package.json pnpm-lock.yaml "$TMPDIR/" || true
+
+          # switch to an empty orphan branch
           git checkout --orphan runtime
           git rm -rf . >/dev/null 2>&1 || true
-          # bring the built artifacts and deps from the previous master commit
-          git checkout master -- dist node_modules package.json pnpm-lock.yaml || true
+
+          # restore the artifacts from temp location
+          cp -r "$TMPDIR"/* .
           git add dist node_modules package.json pnpm-lock.yaml
           git commit -m "runtime build for ${GITHUB_SHA}"
           git push --force origin HEAD:runtime
