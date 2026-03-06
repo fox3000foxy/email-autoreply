@@ -28,11 +28,16 @@ const reportError = (label: string, error: unknown): void => {
 };
 
 const handleFatalError = (error: unknown): void => {
+  // always report the actual error, even in action mode, then emit the
+  // generic line that the GitHub job uses as a failure indicator.  When
+  // running on the cron workflow we mute normal console.log output, so the
+  // only way to see what went wrong is via stderr.
+  reportError("Fatal error", error);
+
   if (isActionMode) {
     writeGenericActionFailure();
-  } else {
-    reportError("Fatal error", error);
   }
+
   process.exitCode = 1;
 };
 
