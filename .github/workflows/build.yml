@@ -51,13 +51,13 @@ jobs:
 
           # stash build output before touching git state
           TMPDIR=$(mktemp -d)
-          cp -r dist node_modules package.json pnpm-lock.yaml "$TMPDIR/" || true
+          cp -r dist node_modules package.json pnpm-lock.yaml data "$TMPDIR/" || true
 
           # create temporary branch so git commit works, then tag that commit
           git checkout --orphan temp-runtime
           git rm -rf . >/dev/null 2>&1 || true
           cp -r "$TMPDIR"/* .
-          git add dist node_modules package.json pnpm-lock.yaml
+          git add dist node_modules package.json pnpm-lock.yaml data
           git commit -m "runtime build for ${GITHUB_SHA}"
 
           # force-create tag pointing at this commit
