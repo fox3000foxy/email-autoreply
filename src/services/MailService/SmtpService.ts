@@ -6,7 +6,9 @@ import type { ConfigService } from "../ConfigService";
 export class SmtpService {
   private transporter: nodemailer.Transporter | null = null;
 
-  constructor(@inject("ConfigService") private _configService: ConfigService) {}
+  constructor(@inject("ConfigService") private configService: ConfigService) {
+    this.configService = configService;
+  }
 
   async connect(): Promise<void> {
     if (!this.transporter) {

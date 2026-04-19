@@ -15,8 +15,9 @@ export class ImapService {
     handler: (...args: unknown[]) => void;
   }> = [];
 
-  constructor(@inject("ConfigService") private _configService: ConfigService) {
+  constructor(@inject("ConfigService") private configService: ConfigService) {
     this.client = null;
+    this.configService = configService;
   }
 
   /**
