@@ -1,6 +1,6 @@
-import fs from "node:fs";
 import Groq from "groq-sdk";
 import { inject, injectable } from "inversify";
+import fs from "node:fs";
 import path from "node:path";
 import type { AccountsService } from "../AccountsService";
 import type { SummaryService } from "./SummaryService";
@@ -22,9 +22,12 @@ export class ReplyService {
   private static readonly RETRY_USER_CONTENT_CHARS = 2200;
 
   constructor(
-    @inject("SummaryService") private _summaryService: SummaryService,
-    @inject("AccountsService") private _accountsService: AccountsService,
-  ) {}
+    @inject("SummaryService") private summaryService: SummaryService,
+    @inject("AccountsService") private accountsService: AccountsService,
+  ) {
+    this.summaryService = summaryService;
+    this.accountsService = accountsService;
+  }
 
   private getGroqClient(): Groq {
     if (!this.groqClient) {
