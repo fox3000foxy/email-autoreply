@@ -1,15 +1,15 @@
 import { inject, injectable } from "inversify";
-import { AccountEntry, AccountsService } from "./services/AccountsService";
-import { ReplyService } from "./services/AIService/ReplyService";
-import { SummaryService } from "./services/AIService/SummaryService";
+import type { AccountEntry, AccountsService } from "./services/AccountsService";
+import type { ReplyService } from "./services/AIService/ReplyService";
+import type { SummaryService } from "./services/AIService/SummaryService";
 import { LastIdService } from "./services/LastIdService";
-import { ImapService } from "./services/MailService/ImapService";
-import { ParserService } from "./services/MailService/ParserService";
-import { SmtpService } from "./services/MailService/SmtpService";
+import type { ImapService } from "./services/MailService/ImapService";
+import type { ParserService } from "./services/MailService/ParserService";
+import type { SmtpService } from "./services/MailService/SmtpService";
 import {
-    isAutomatedByHeaders,
-    isAutomatedSender,
-    isValidEmail,
+  isAutomatedByHeaders,
+  isAutomatedSender,
+  isValidEmail,
 } from "./utils/MailUtils";
 
 type EnvelopeAddress = {
@@ -40,7 +40,14 @@ export class App {
     @inject("SummaryService") private summaryService: SummaryService,
     @inject("ReplyService") private replyService: ReplyService,
     @inject("AccountsService") private accountsService: AccountsService,
-  ) {}
+  ) {
+    this.imapService = imapService;
+    this.smtpService = smtpService;
+    this.parserService = parserService;
+    this.summaryService = summaryService;
+    this.replyService = replyService;
+    this.accountsService = accountsService;
+  }
 
   private lastIdService = new LastIdService();
 
@@ -74,7 +81,7 @@ export class App {
       fromAddress.some(isAutomatedSender) || isAutomatedByHeaders(headersObj);
     if (isAutomated) {
       console.log(
-        `[MAIL] Automated/newsletter sender ignored (from=${fromAddress.join(", ")}, precedence=${headersObj["precedence"] || "none"}, list-unsubscribe=${headersObj["list-unsubscribe"] ? "yes" : "no"}).`,
+        `[MAIL] Automated/newsletter sender ignored (from=${fromAddress.join(", ")}, precedence=${headersObj.precedence || "none"}, list-unsubscribe=${headersObj["list-unsubscribe"] ? "yes" : "no"}).`,
       );
       return;
     }

@@ -1,12 +1,12 @@
 import { inject, injectable } from "inversify";
 import nodemailer from "nodemailer";
-import { ConfigService } from "../ConfigService";
+import type { ConfigService } from "../ConfigService";
 
 @injectable()
 export class SmtpService {
   private transporter: nodemailer.Transporter | null = null;
 
-  constructor(@inject("ConfigService") private configService: ConfigService) {}
+  constructor(@inject("ConfigService") private _configService: ConfigService) {}
 
   async connect(): Promise<void> {
     if (!this.transporter) {

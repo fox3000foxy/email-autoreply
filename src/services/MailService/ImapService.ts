@@ -1,6 +1,6 @@
-import { ImapFlow, ListResponse } from "imapflow";
+import { ImapFlow, type ListResponse } from "imapflow";
 import { inject, injectable } from "inversify";
-import { ConfigService } from "../ConfigService";
+import type { ConfigService } from "../ConfigService";
 
 const MAX_RECONNECT_DELAY_MS = 60_000;
 const INITIAL_RECONNECT_DELAY_MS = 5_000;
@@ -15,7 +15,7 @@ export class ImapService {
     handler: (...args: unknown[]) => void;
   }> = [];
 
-  constructor(@inject("ConfigService") private configService: ConfigService) {
+  constructor(@inject("ConfigService") private _configService: ConfigService) {
     this.client = null;
   }
 

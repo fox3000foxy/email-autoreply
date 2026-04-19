@@ -1,9 +1,9 @@
-import fs from "fs";
+import fs from "node:fs";
 import Groq from "groq-sdk";
 import { inject, injectable } from "inversify";
-import path from "path";
-import { AccountsService } from "../AccountsService";
-import { SummaryService } from "./SummaryService";
+import path from "node:path";
+import type { AccountsService } from "../AccountsService";
+import type { SummaryService } from "./SummaryService";
 
 export const MANUAL_REPLY_TRIGGER = "<manual_reply_required>";
 export const NO_REPLY_TRIGGER = "<no_reply>";
@@ -22,8 +22,8 @@ export class ReplyService {
   private static readonly RETRY_USER_CONTENT_CHARS = 2200;
 
   constructor(
-    @inject("SummaryService") private summaryService: SummaryService,
-    @inject("AccountsService") private accountsService: AccountsService,
+    @inject("SummaryService") private _summaryService: SummaryService,
+    @inject("AccountsService") private _accountsService: AccountsService,
   ) {}
 
   private getGroqClient(): Groq {
