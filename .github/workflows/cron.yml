@@ -2,7 +2,7 @@ name: Email Auto Reply Action
 
 on:
   schedule:
-    - cron: "*/5 * * * *"
+    # - cron: "*/5 * * * *"
   workflow_dispatch:
 
 permissions:
