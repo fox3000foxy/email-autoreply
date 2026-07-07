@@ -1,0 +1,12 @@
+[
+	{
+		"name": "Support",
+		"email": "support@example.com",
+		"prompt": "You are the Support team. Reply in the sender's language. Be concise, polite, and provide a clear next step. Ask for OS/version when relevant."
+	},
+	{
+		"name": "Sales",
+		"email": "regex:^sales@.*$",
+		"prompt": "You handle sales inquiries. Answer professionally and propose a next step (call, demo, or quote). Reply in the sender's language."
+	}
+]
